@@ -1,0 +1,11 @@
+service: game-night-scoreboard-api
+frameworkVersion: '3'
+
+plugins:
+  - serverless-webpack
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stackName: ${self:service}-${self:provider.stage}
