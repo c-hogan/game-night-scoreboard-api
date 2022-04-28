@@ -1,11 +1,96 @@
 service: game-night-scoreboard-api
-frameworkVersion: '3'
+frameworkVersion: '2|3'
 
 plugins:
   - serverless-webpack
+  - serverless-dynamodb-local
   - serverless-offline
 
 provider:
   name: aws
   runtime: nodejs14.x
+  stage: ${opt:stage, 'local'}
   stackName: ${self:service}-${self:provider.stage}
+  tags:
+    app: ${self:custom.appShortName}
+    environment: ${self:provider.stage}
+  environment:
+    APP_ENVIRONMENT: ${self:provider.stage}
+    GROUPS_TABLE: ${self:custom.tableNames.groupsTable}
+    PLAYERS_TABLE: ${self:custom.tableNames.playersTable}
+    PLAYLOG_TABLE: ${self:custom.tableNames.playLogTable}
+
+custom:
+  appShortName: GNSB
+  tableNames:
+    groupsTable: ${self:custom.appShortName}-Groups-${self:provider.stage}
+    playersTable: ${self:custom.appShortName}-Players-${self:provider.stage}
+    playLogTable: ${self:custom.appShortName}-PlayLog-${self:provider.stage}
+  # DynamoDB Local settings
+  dynamodb:
+    stages:
+      - local
+    migrate: true
+    sharedDb: true
+
+functions:
+  createGroup:
+    handler: src/handlers/groups/create-group.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /groups
+  getGroup:
+    handler: src/handlers/groups/get-group.handler
+    events:
+      - httpApi:
+          method: GET
+          path: /groups/{id}
+  updateGroup:
+    handler: src/handlers/groups/update-group.handler
+    events:
+      - httpApi:
+          method: PUT
+          path: /groups/{id}
+  deleteGroup:
+    handler: src/handlers/groups/delete-group.handler
+    events:
+      - httpApi:
+          method: DELETE
+          path: /groups/{id}
+
+resources:
+  Resources:
+    groupsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.GROUPS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+    playersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.PLAYERS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+    playLogTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.PLAYLOG_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
