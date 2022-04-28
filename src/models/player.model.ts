@@ -24,4 +24,8 @@ export default interface Player {
 
   groups: string[];
 
-};
+  createdDate: Date;
+
+  createdById: string;
+
+}

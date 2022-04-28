@@ -7,6 +7,8 @@ interface GroupSettings {
 
   privacyType: GroupPrivacyType;
 
+  administratorIds: string[];
+
 }
 
 export default interface Group {
@@ -15,6 +17,13 @@ export default interface Group {
 
   name: string;
 
-  settings: GroupSettings
+  settings: GroupSettings;
 
+  createdDate: number;
+
+  createdById: string;
+
+  lastUpdatedDate: number;
+
+  lastUpdatedById: string;
 }
