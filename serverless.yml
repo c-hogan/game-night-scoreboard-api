@@ -33,8 +33,8 @@ provider:
           - Ref: serviceUserPoolClient
   environment:
     APP_ENVIRONMENT: ${self:provider.stage}
-    PLAYERS_TABLE: ${self:custom.tableNames.playersTable}
-    PLAYLOG_TABLE: ${self:custom.tableNames.playLogTable}
+    # PLAYERS_TABLE: ${self:custom.tableNames.playersTable}
+    # PLAYLOG_TABLE: ${self:custom.tableNames.playLogTable}
 
 package:
   individually: true
@@ -110,29 +110,29 @@ resources:
           - AttributeName: id
             KeyType: HASH
 
-    playersTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:custom.tableNames.playersTable}
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
-        KeySchema:
-          - AttributeName: id
-            KeyType: HASH
+    # playersTable:
+    #   Type: AWS::DynamoDB::Table
+    #   Properties:
+    #     TableName: ${self:custom.tableNames.playersTable}
+    #     BillingMode: PAY_PER_REQUEST
+    #     AttributeDefinitions:
+    #       - AttributeName: id
+    #         AttributeType: S
+    #     KeySchema:
+    #       - AttributeName: id
+    #         KeyType: HASH
 
-    playLogTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:custom.tableNames.playLogTable}
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
-        KeySchema:
-          - AttributeName: id
-            KeyType: HASH
+    # playLogTable:
+    #   Type: AWS::DynamoDB::Table
+    #   Properties:
+    #     TableName: ${self:custom.tableNames.playLogTable}
+    #     BillingMode: PAY_PER_REQUEST
+    #     AttributeDefinitions:
+    #       - AttributeName: id
+    #         AttributeType: S
+    #     KeySchema:
+    #       - AttributeName: id
+    #         KeyType: HASH
 
     httpApi:
       Type: AWS::Serverless::HttpApi
