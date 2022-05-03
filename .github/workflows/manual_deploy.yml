@@ -32,6 +32,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
 
       - name: Get Yarn cache directory path
         id: yarn-cache-dir-path
@@ -52,9 +53,10 @@ jobs:
         run: yarn install
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials
+        uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: ${{ secrets.AWS_SERVERLESS_DEPLOY_ROLE }}
+          aws-region: ${{ env.AWS_REGION  }}
 
       - name: Deploy
         run: yarn deploy --stage=${{ github.event.inputs.stage }}
