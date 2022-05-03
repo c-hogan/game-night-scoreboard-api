@@ -3,9 +3,179 @@ frameworkVersion: '3'
 
 plugins:
   - serverless-webpack
+  - serverless-dynamodb-local
   - serverless-offline
 
 provider:
   name: aws
+  region: us-east-2
   runtime: nodejs14.x
+  stage: ${opt:stage, 'local'}
+  deploymentBucket:
+    name: serverless-deploys-gnsb-${self:provider.stage}
+    maxPreviousDeploymentArtifacts: 3
   stackName: ${self:service}-${self:provider.stage}
+  tags:
+    app: ${self:custom.appShortName}
+    environment: ${self:provider.stage}
+  httpApi:
+    authorizers:
+      serviceAuthorizer:
+        identitySource: $request.header.Authorization
+        issuerUrl:
+          Fn::Join:
+          - ''
+          - - 'https://cognito-idp.'
+            - '${self:provider.region}'
+            - '.amazonaws.com/'
+            - Ref: serviceUserPool
+        audience:
+          - Ref: serviceUserPoolClient
+  environment:
+    APP_ENVIRONMENT: ${self:provider.stage}
+    # PLAYERS_TABLE: ${self:custom.tableNames.playersTable}
+    # PLAYLOG_TABLE: ${self:custom.tableNames.playLogTable}
+
+package:
+  individually: true
+
+custom:
+  appShortName: GNSB
+  tableNames:
+    groupsTable: ${self:custom.appShortName}-Groups-${self:provider.stage}
+    playersTable: ${self:custom.appShortName}-Players-${self:provider.stage}
+    playLogTable: ${self:custom.appShortName}-PlayLog-${self:provider.stage}
+  userPoolName: ${self:custom.appShortName}-UserPool-${self:provider.stage}
+  userPoolClientName: ${self:custom.appShortName}-UserPoolClient-${self:provider.stage}
+  userPoolDomain: ${self:custom.appShortName}-UserPoolDomain-${self:provider.stage}
+  # DynamoDB Local settings
+  dynamodb:
+    stages:
+      - local
+    migrate: true
+    sharedDb: true
+
+functions:
+  createGroup:
+    handler: src/handlers/groups/create-group.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /v1/groups
+          authorizer: serviceAuthorizer
+    environment:
+      GROUPS_TABLE: ${self:custom.tableNames.groupsTable}
+
+  getGroup:
+    handler: src/handlers/groups/get-group.handler
+    events:
+      - httpApi:
+          method: GET
+          path: /v1/groups/{id}
+          authorizer: serviceAuthorizer
+    environment:
+      GROUPS_TABLE: ${self:custom.tableNames.groupsTable}
+
+  updateGroup:
+    handler: src/handlers/groups/update-group.handler
+    events:
+      - httpApi:
+          method: PUT
+          path: /v1/groups/{id}
+          authorizer: serviceAuthorizer
+    environment:
+      GROUPS_TABLE: ${self:custom.tableNames.groupsTable}
+
+  deleteGroup:
+    handler: src/handlers/groups/delete-group.handler
+    events:
+      - httpApi:
+          method: DELETE
+          path: /v1/groups/{id}
+          authorizer: serviceAuthorizer
+    environment:
+      GROUPS_TABLE: ${self:custom.tableNames.groupsTable}
+
+resources:
+  Resources:
+    groupsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.tableNames.groupsTable}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+    # playersTable:
+    #   Type: AWS::DynamoDB::Table
+    #   Properties:
+    #     TableName: ${self:custom.tableNames.playersTable}
+    #     BillingMode: PAY_PER_REQUEST
+    #     AttributeDefinitions:
+    #       - AttributeName: id
+    #         AttributeType: S
+    #     KeySchema:
+    #       - AttributeName: id
+    #         KeyType: HASH
+
+    # playLogTable:
+    #   Type: AWS::DynamoDB::Table
+    #   Properties:
+    #     TableName: ${self:custom.tableNames.playLogTable}
+    #     BillingMode: PAY_PER_REQUEST
+    #     AttributeDefinitions:
+    #       - AttributeName: id
+    #         AttributeType: S
+    #     KeySchema:
+    #       - AttributeName: id
+    #         KeyType: HASH
+
+    httpApi:
+      Type: AWS::Serverless::HttpApi
+      DependsOn: serviceUserPool
+
+    serviceUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: ${self:custom.userPoolName}
+        UsernameAttributes:
+          - email
+        AutoVerifiedAttributes:
+          - email
+
+    serviceUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: ${self:custom.userPoolClientName}
+        AllowedOAuthFlows:
+          - implicit
+        AllowedOAuthFlowsUserPoolClient: true
+        AllowedOAuthScopes:
+          - phone
+          - email
+          - openid
+          - profile
+          - aws.cognito.signin.user.admin
+        UserPoolId:
+          Ref: serviceUserPool
+        ExplicitAuthFlows:
+          - ALLOW_USER_SRP_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+        GenerateSecret: false
+        SupportedIdentityProviders:
+          - COGNITO
+          - Facebook
+          - SignInWithApple
+          - Google
+          - LoginWithAmazon
+
+    serviceUserPoolDomain:
+      Type: AWS::Cognito::UserPoolDomain
+      Properties:
+        UserPoolId:
+          Ref: serviceUserPool
+        Domain: ${self:custom.userPoolDomain}

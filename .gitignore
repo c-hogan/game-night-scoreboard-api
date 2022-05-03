@@ -51,8 +51,8 @@ typings/
 .npm
 
 # Yarn
+.pnp.*
 .yarn/*
-!.yarn/cache
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
@@ -111,3 +111,7 @@ dist
 
 # TernJS port file
 .tern-port
+
+.webpack
+
+.vscode
