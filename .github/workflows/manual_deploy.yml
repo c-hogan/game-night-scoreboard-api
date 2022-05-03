@@ -55,6 +55,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: ${{ secrets.AWS_SERVERLESS_DEPLOY_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy
         run: yarn deploy --stage=${{ github.event.inputs.stage }}
