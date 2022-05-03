@@ -19,9 +19,8 @@ permissions:
   id-token: write
 
 jobs:
-  deploy:
-    name: Serverless Deploy
-
+  install:
+    name: Install
     runs-on: [ubuntu-latest]
 
     steps:
@@ -51,11 +50,21 @@ jobs:
         if: github.event.inputs.use-cache != 'true' || steps.yarn-cache.outputs.cache-hit != 'true'
         run: yarn install
 
+  configure_aws:
+    name: Configure AWS
+    needs: [install]
+    runs-on: [ubuntu-latest]
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: ${{ secrets.AWS_SERVERLESS_DEPLOY_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
+
+  deploy:
+    name: Deploy
+    needs: [install, configure_aws]
+    runs-on: [ubuntu-latest]
 
       - name: Deploy
         run: yarn deploy --stage=${{ github.event.inputs.stage }}
