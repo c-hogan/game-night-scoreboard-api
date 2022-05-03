@@ -140,12 +140,9 @@ resources:
 
     serviceUserPool:
       Type: AWS::Cognito::UserPool
+      DeletionPolicy: Retain
       Properties:
         UserPoolName: ${self:custom.userPoolName}
-        UsernameAttributes:
-          - email
-        AutoVerifiedAttributes:
-          - email
 
     serviceUserPoolClient:
       Type: AWS::Cognito::UserPoolClient
