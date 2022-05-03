@@ -137,6 +137,8 @@ resources:
     httpApi:
       Type: AWS::ApiGatewayV2::Api
       DependsOn: serviceUserPool
+      Properties:
+        ProtocolType: HTTP
 
     serviceUserPool:
       Type: AWS::Cognito::UserPool
