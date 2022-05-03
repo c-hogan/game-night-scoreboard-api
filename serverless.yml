@@ -135,7 +135,7 @@ resources:
     #         KeyType: HASH
 
     httpApi:
-      Type: AWS::Serverless::HttpApi
+      Type: AWS::ApiGatewayV2::Api
       DependsOn: serviceUserPool
 
     serviceUserPool:
