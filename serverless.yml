@@ -34,7 +34,6 @@ provider:
           - Ref: serviceUserPoolClient
   environment:
     APP_ENVIRONMENT: ${self:provider.stage}
-    # PLAYERS_TABLE: ${self:custom.tableNames.playersTable}
     # PLAYLOG_TABLE: ${self:custom.tableNames.playLogTable}
 
 package:
@@ -58,6 +57,7 @@ custom:
     sharedDb: true
 
 functions:
+  # Group Functions
   createGroup:
     handler: src/handlers/groups/create-group.handler
     events:
@@ -121,6 +121,70 @@ functions:
           - dynamodb:DeleteItem
         Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.groupsTable}"
 
+  # Player Functions
+  createPlayer:
+    handler: src/handlers/players/create-player.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /v1/players
+          authorizer: serviceAuthorizer
+    environment:
+      PLAYERS_TABLE: ${self:custom.tableNames.playersTable}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.playersTable}"
+
+  getPlayer:
+    handler: src/handlers/players/get-player.handler
+    events:
+      - httpApi:
+          method: GET
+          path: /v1/players/{id}
+          authorizer: serviceAuthorizer
+    environment:
+      PLAYERS_TABLE: ${self:custom.tableNames.playersTable}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.playersTable}"
+
+  updatePlayer:
+    handler: src/handlers/players/update-player.handler
+    events:
+      - httpApi:
+          method: PUT
+          path: /v1/players/{id}
+          authorizer: serviceAuthorizer
+    environment:
+      PLAYERS_TABLE: ${self:custom.tableNames.playersTable}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+          - dynamodb:UpdateItem
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.playersTable}"
+
+  deletePlayer:
+    handler: src/handlers/players/delete-player.handler
+    events:
+      - httpApi:
+          method: DELETE
+          path: /v1/players/{id}
+          authorizer: serviceAuthorizer
+    environment:
+      PLAYERS_TABLE: ${self:custom.tableNames.playersTable}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:DeleteItem
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.playersTable}"
+
 resources:
   Resources:
     groupsTable:
@@ -135,17 +199,17 @@ resources:
           - AttributeName: id
             KeyType: HASH
 
-    # playersTable:
-    #   Type: AWS::DynamoDB::Table
-    #   Properties:
-    #     TableName: ${self:custom.tableNames.playersTable}
-    #     BillingMode: PAY_PER_REQUEST
-    #     AttributeDefinitions:
-    #       - AttributeName: id
-    #         AttributeType: S
-    #     KeySchema:
-    #       - AttributeName: id
-    #         KeyType: HASH
+    playersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.tableNames.playersTable}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
 
     # playLogTable:
     #   Type: AWS::DynamoDB::Table
