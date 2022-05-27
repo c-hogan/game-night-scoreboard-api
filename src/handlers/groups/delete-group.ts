@@ -3,7 +3,6 @@ import { IDbService } from '../../interfaces';
 import { diContainer } from '../../inversify.config';
 import { InjectableTypes } from '../../types';
 import * as logger from 'lambda-log';
-import { Group } from '../../models';
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   logger.options.meta = {
@@ -22,7 +21,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const table = process.env.GROUPS_TABLE || '';
 
-    await dbService.delete<Group>(table, id);
+    await dbService.delete(table, id);
 
     response = {
       statusCode: 200,

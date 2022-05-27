@@ -1,69 +1,102 @@
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, GetCommand, UpdateCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { injectable } from 'inversify';
 import { IDbService } from '../interfaces';
+import { DbItem } from '../models';
 
 @injectable()
 export class DynamoDbService implements IDbService {
-  protected _client: DocumentClient;
+
+  protected _ddbClient: DynamoDBClient;
+  protected _docClient: DynamoDBDocumentClient;
 
   constructor() {
 
     if (process.env.IS_OFFLINE) {
-      this._client = new DocumentClient({
+
+      this._ddbClient = new DynamoDBClient({
         region: 'local',
-        endpoint: 'http://localhost:8000',
-        accessKeyId: 'DEFAULT_ACCESS_KEY',
-        secretAccessKey: 'DEFAULT_SECRET'
+        endpoint: 'http://localhost:8000'
       });
+
     } else {
-      this._client = new DocumentClient();
+
+      this._ddbClient = new DynamoDBClient({});
+
     }
+
+    this._docClient = DynamoDBDocumentClient.from(this._ddbClient);
   }
 
-  public get = async <T>(tableName: string, objId: string): Promise<T> => {
-    const params: DocumentClient.GetItemInput = {
-      TableName: tableName,
-      Key: {
-        id: objId
-      }
-    };
+  public put = async <T extends DbItem>(tableName: string, obj: T): Promise<T> => {
 
-    try {
-      const res = await this._client.get(params).promise();
-      return res.Item as T;
-    } catch (err) {
-      throw err;
-    }
+    await this._docClient.send(
+      new PutCommand({
+        TableName: tableName,
+        Item: obj
+      })
+    );
+
+    return obj;
   }
 
-  public put = async <T>(tableName: string, obj: T): Promise<boolean> => {
-    const params: DocumentClient.PutItemInput = {
-      TableName: tableName,
-      Item: obj
-    };
+  public get = async <T extends DbItem>(tableName: string, objId: string): Promise<T> => {
 
-    try {
-      await this._client.put(params).promise();
-      return true
-    } catch (err) {
-      throw err;
-    }
+    const res = await this._docClient.send(
+      new GetCommand({
+        TableName: tableName,
+        Key: {
+          id: objId
+        }
+      })
+    );
+
+    return res.Item as T;
   }
 
-  public delete = async <T>(tableName: string, objId: string): Promise<boolean> => {
+  public update = async <T extends DbItem>(tableName: string, objId: string, obj: any): Promise<T> => {
 
-    const params: DocumentClient.DeleteItemInput = {
-      TableName: tableName,
-      Key: {
-        id: objId
-      }
-    };
+    const objKeys = Object.keys(obj).filter(key => key !== 'id');
 
-    try {
-      await this._client.delete(params).promise();
-      return true;
-    } catch (err) {
-      throw err;
-    }
+    const updateExpression = `SET ${objKeys.map((key, index) => `#field${index} = :value${index}`).join(', ')}`;
+
+    const attributeNames = objKeys.reduce((accumulator, key, index) => ({
+      ...accumulator,
+      [`#field${index}`]: key
+    }), {});
+
+    const attributeValues = objKeys.reduce((accumulator, key, index) => ({
+      ...accumulator,
+      [`:value${index}`]: obj[key]
+    }), {});
+
+    const res = await this._docClient.send(
+      new UpdateCommand({
+        TableName: tableName,
+        Key: {
+          id: objId
+        },
+        UpdateExpression: updateExpression,
+        ExpressionAttributeNames: attributeNames,
+        ExpressionAttributeValues: attributeValues,
+        ReturnValues: 'ALL_NEW'
+      })
+    );
+
+    return res.Attributes as T;
+  }
+
+  public delete = async (tableName: string, objId: string): Promise<boolean> => {
+
+    await this._docClient.send(
+      new DeleteCommand({
+        TableName: tableName,
+        Key: {
+          id: objId
+        }
+      })
+    );
+
+    return true;
   }
 }

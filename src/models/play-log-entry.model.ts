@@ -1,6 +1,6 @@
-export default interface PlayLogEntry {
+import DbItem from "./db-item";
 
-  id: string;
+export default interface PlayLogEntry extends DbItem {
 
   groupId: string;
 
@@ -13,13 +13,5 @@ export default interface PlayLogEntry {
   date: Date;
 
   notes: string;
-
-  createdDate: Date;
-
-  createdById: string;
-
-  lastUpdatedDate: Date;
-
-  lastUpdatedById: string;
 
 }
