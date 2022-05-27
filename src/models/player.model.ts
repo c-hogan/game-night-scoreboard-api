@@ -16,7 +16,7 @@ interface PlayerAvatar {
 
 export default interface Player extends DbItem {
 
-  username: string;
+  user: string;
 
   name: string;
 
