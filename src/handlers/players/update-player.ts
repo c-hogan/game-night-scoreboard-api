@@ -32,7 +32,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     player.lastUpdatedDate = Date.now();
     player.lastUpdatedBy = user;
 
-    const table = process.env.GROUPS_TABLE || '';
+    const table = process.env.PLAYERS_TABLE || '';
 
     const updatedPlayer = await dbService.update<Player>(table, id, player);
 
