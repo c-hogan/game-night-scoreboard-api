@@ -1,3 +1,5 @@
+import DbItem from "./db-item";
+
 export enum GroupPrivacyType {
   Public = 'public',
   Private = 'private'
@@ -11,19 +13,10 @@ interface GroupSettings {
 
 }
 
-export default interface Group {
-
-  id: string;
+export default interface Group extends DbItem {
 
   name: string;
 
   settings: GroupSettings;
 
-  createdDate: number;
-
-  createdById: string;
-
-  lastUpdatedDate: number;
-
-  lastUpdatedById: string;
 }

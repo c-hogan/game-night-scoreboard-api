@@ -5,7 +5,6 @@ import { diContainer } from '../../inversify.config';
 import { Group } from '../../models';
 import { InjectableTypes } from '../../types';
 import * as logger from 'lambda-log';
-import { get as _get } from 'lodash';
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   logger.options.meta = {
@@ -17,7 +16,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
   try {
     const requestBody = event?.body || '';
-    let group = JSON.parse(requestBody) as Group;
+    const group = JSON.parse(requestBody) as Group;
+    const user = event?.requestContext?.authorizer?.jwt?.claims?.email || '';
 
     // TODO: Add validation
     if (!group) {
@@ -26,6 +26,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     group.id = nanoid();
     group.createdDate = group.lastUpdatedDate = Date.now();
+    group.createdBy = group.lastUpdatedBy = user;
 
     const table = process.env.GROUPS_TABLE || '';
 

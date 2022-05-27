@@ -1,3 +1,5 @@
+import DbItem from "./db-item";
+
 export enum AvatarType {
   Initials = 'initials',
   Icon = 'icon',
@@ -12,9 +14,7 @@ interface PlayerAvatar {
 
 }
 
-export default interface Player {
-
-  id: string;
+export default interface Player extends DbItem {
 
   username: string;
 
@@ -23,9 +23,5 @@ export default interface Player {
   avatar: PlayerAvatar;
 
   groups: string[];
-
-  createdDate: Date;
-
-  createdById: string;
 
 }

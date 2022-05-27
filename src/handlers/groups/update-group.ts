@@ -14,23 +14,31 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   let response: APIGatewayProxyResult;
 
   try {
+    const id = event?.pathParameters?.id || false;
+    const user = event?.requestContext?.authorizer?.jwt?.claims?.email || '';
+
+    if (!id) {
+      throw new Error('Missing id in path');
+    }
+
     const requestBody = event?.body || '';
-    let group = JSON.parse(requestBody) as Group;
+    const group = JSON.parse(requestBody) as Group;
 
     // TODO: Add validation
-    if (!group || !group.id) {
-      throw new Error('Missing Group in POST body or Group does not already exist.');
+    if (!group) {
+      throw new Error('Missing Group in PUT body');
     }
 
     group.lastUpdatedDate = Date.now();
+    group.lastUpdatedBy = user;
 
     const table = process.env.GROUPS_TABLE || '';
 
-    await dbService.put<Group>(table, group);
+    const updatedGroup = await dbService.update<Group>(table, id, group);
 
     response = {
       statusCode: 200,
-      body: JSON.stringify(group)
+      body: JSON.stringify(updatedGroup)
     };
 
   } catch (err) {

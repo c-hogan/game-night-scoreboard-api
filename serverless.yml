@@ -2,6 +2,7 @@ service: game-night-scoreboard-api
 frameworkVersion: '3'
 
 plugins:
+  - serverless-iam-roles-per-function
   - serverless-webpack
   - serverless-dynamodb-local
   - serverless-offline
@@ -9,10 +10,10 @@ plugins:
 provider:
   name: aws
   region: us-east-2
-  runtime: nodejs14.x
+  runtime: nodejs16.x
   stage: ${opt:stage, 'local'}
   deploymentBucket:
-    name: serverless-deploys-gnsb-${self:provider.stage}
+    name: serverless-deploys-gnsb
     maxPreviousDeploymentArtifacts: 3
   stackName: ${self:service}-${self:provider.stage}
   tags:
@@ -40,14 +41,15 @@ package:
   individually: true
 
 custom:
-  appShortName: GNSB
+  appShortName: gnsb
   tableNames:
-    groupsTable: ${self:custom.appShortName}-Groups-${self:provider.stage}
-    playersTable: ${self:custom.appShortName}-Players-${self:provider.stage}
-    playLogTable: ${self:custom.appShortName}-PlayLog-${self:provider.stage}
-  userPoolName: ${self:custom.appShortName}-UserPool-${self:provider.stage}
-  userPoolClientName: ${self:custom.appShortName}-UserPoolClient-${self:provider.stage}
-  userPoolDomain: ${self:custom.appShortName}-UserPoolDomain-${self:provider.stage}
+    groupsTable: ${self:custom.appShortName}-groups-table-${self:provider.stage}
+    playersTable: ${self:custom.appShortName}-players-table-${self:provider.stage}
+    playLogTable: ${self:custom.appShortName}-playlog-table-${self:provider.stage}
+  apiName: ${self:custom.appShortName}-apigateway-${self:provider.stage}
+  userPoolName: ${self:custom.appShortName}-userpool-${self:provider.stage}
+  userPoolClientName: ${self:custom.appShortName}-userpoolclient-${self:provider.stage}
+  userPoolDomain: ${self:custom.appShortName}-userpooldomain-${self:provider.stage}
   # DynamoDB Local settings
   dynamodb:
     stages:
@@ -65,6 +67,11 @@ functions:
           authorizer: serviceAuthorizer
     environment:
       GROUPS_TABLE: ${self:custom.tableNames.groupsTable}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.groupsTable}"
 
   getGroup:
     handler: src/handlers/groups/get-group.handler
@@ -75,6 +82,11 @@ functions:
           authorizer: serviceAuthorizer
     environment:
       GROUPS_TABLE: ${self:custom.tableNames.groupsTable}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.groupsTable}"
 
   updateGroup:
     handler: src/handlers/groups/update-group.handler
@@ -85,6 +97,13 @@ functions:
           authorizer: serviceAuthorizer
     environment:
       GROUPS_TABLE: ${self:custom.tableNames.groupsTable}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+          - dynamodb:UpdateItem
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.groupsTable}"
 
   deleteGroup:
     handler: src/handlers/groups/delete-group.handler
@@ -95,6 +114,12 @@ functions:
           authorizer: serviceAuthorizer
     environment:
       GROUPS_TABLE: ${self:custom.tableNames.groupsTable}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:DeleteItem
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.groupsTable}"
 
 resources:
   Resources:
@@ -134,17 +159,16 @@ resources:
     #       - AttributeName: id
     #         KeyType: HASH
 
-    httpApi:
-      Type: AWS::ApiGatewayV2::Api
-      DependsOn: serviceUserPool
-      Properties:
-        ProtocolType: HTTP
-
     serviceUserPool:
       Type: AWS::Cognito::UserPool
-      DeletionPolicy: Retain
       Properties:
         UserPoolName: ${self:custom.userPoolName}
+        UsernameAttributes:
+          - email
+        AutoVerifiedAttributes:
+          - email
+        AdminCreateUserConfig:
+          AllowAdminCreateUserOnly: true
 
     serviceUserPoolClient:
       Type: AWS::Cognito::UserPoolClient
@@ -161,16 +185,14 @@ resources:
           - aws.cognito.signin.user.admin
         UserPoolId:
           Ref: serviceUserPool
+        CallbackURLs:
+          - https://localhost:3000
         ExplicitAuthFlows:
           - ALLOW_USER_SRP_AUTH
           - ALLOW_REFRESH_TOKEN_AUTH
         GenerateSecret: false
         SupportedIdentityProviders:
           - COGNITO
-          - Facebook
-          - SignInWithApple
-          - Google
-          - LoginWithAmazon
 
     serviceUserPoolDomain:
       Type: AWS::Cognito::UserPoolDomain
