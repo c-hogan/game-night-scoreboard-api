@@ -34,7 +34,6 @@ provider:
           - Ref: serviceUserPoolClient
   environment:
     APP_ENVIRONMENT: ${self:provider.stage}
-    # PLAYLOG_TABLE: ${self:custom.tableNames.playLogTable}
 
 package:
   individually: true
@@ -67,6 +66,7 @@ functions:
           authorizer: serviceAuthorizer
     environment:
       GROUPS_TABLE: ${self:custom.tableNames.groupsTable}
+    iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-createGroup-lambdaRole
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -82,6 +82,7 @@ functions:
           authorizer: serviceAuthorizer
     environment:
       GROUPS_TABLE: ${self:custom.tableNames.groupsTable}
+    iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-getGroup-lambdaRole
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -97,6 +98,7 @@ functions:
           authorizer: serviceAuthorizer
     environment:
       GROUPS_TABLE: ${self:custom.tableNames.groupsTable}
+    iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-updateGroup-lambdaRole
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -114,6 +116,7 @@ functions:
           authorizer: serviceAuthorizer
     environment:
       GROUPS_TABLE: ${self:custom.tableNames.groupsTable}
+    iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-deleteGroup-lambdaRole
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -131,6 +134,7 @@ functions:
           authorizer: serviceAuthorizer
     environment:
       PLAYERS_TABLE: ${self:custom.tableNames.playersTable}
+    iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-createPlayer-lambdaRole
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -146,6 +150,7 @@ functions:
           authorizer: serviceAuthorizer
     environment:
       PLAYERS_TABLE: ${self:custom.tableNames.playersTable}
+    iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-getPlayer-lambdaRole
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -161,6 +166,7 @@ functions:
           authorizer: serviceAuthorizer
     environment:
       PLAYERS_TABLE: ${self:custom.tableNames.playersTable}
+    iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-updatePlayer-lambdaRole
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -178,12 +184,81 @@ functions:
           authorizer: serviceAuthorizer
     environment:
       PLAYERS_TABLE: ${self:custom.tableNames.playersTable}
+    iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-deletePlayer-lambdaRole
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:GetItem
           - dynamodb:DeleteItem
         Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.playersTable}"
+
+  # Play Log Functions
+  createPlayLogEntry:
+    handler: src/handlers/play-log/create-play-log-entry.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /v1/play-log
+          authorizer: serviceAuthorizer
+    environment:
+      PLAY_LOG_TABLE: ${self:custom.tableNames.playLogTable}
+    iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-createPlayLogEntry-lambdaRole
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.playLogTable}"
+
+  getPlayLogEntry:
+    handler: src/handlers/play-log/get-play-log-entry.handler
+    events:
+      - httpApi:
+          method: GET
+          path: /v1/play-log/{id}
+          authorizer: serviceAuthorizer
+    environment:
+      PLAY_LOG_TABLE: ${self:custom.tableNames.playLogTable}
+    iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-getPlayLogEntry-lambdaRole
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.playLogTable}"
+
+  updatePlayLogEntry:
+    handler: src/handlers/play-log/update-play-log-entry.handler
+    events:
+      - httpApi:
+          method: PUT
+          path: /v1/play-log/{id}
+          authorizer: serviceAuthorizer
+    environment:
+      PLAY_LOG_TABLE: ${self:custom.tableNames.playLogTable}
+    iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-updatePlayLogEntry-lambdaRole
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+          - dynamodb:UpdateItem
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.playLogTable}"
+
+  deletePlayLogEntry:
+    handler: src/handlers/play-log/delete-play-log-entry.handler
+    events:
+      - httpApi:
+          method: DELETE
+          path: /v1/play-log/{id}
+          authorizer: serviceAuthorizer
+    environment:
+      PLAY_LOG_TABLE: ${self:custom.tableNames.playLogTable}
+    iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-deletePlayLogEntry-lambdaRole
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:DeleteItem
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.playLogTable}"
 
 resources:
   Resources:
@@ -211,17 +286,17 @@ resources:
           - AttributeName: id
             KeyType: HASH
 
-    # playLogTable:
-    #   Type: AWS::DynamoDB::Table
-    #   Properties:
-    #     TableName: ${self:custom.tableNames.playLogTable}
-    #     BillingMode: PAY_PER_REQUEST
-    #     AttributeDefinitions:
-    #       - AttributeName: id
-    #         AttributeType: S
-    #     KeySchema:
-    #       - AttributeName: id
-    #         KeyType: HASH
+    playLogTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.tableNames.playLogTable}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
 
     serviceUserPool:
       Type: AWS::Cognito::UserPool
