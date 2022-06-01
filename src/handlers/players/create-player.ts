@@ -25,8 +25,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     player.id = nanoid();
-    player.createdDate = player.lastUpdatedDate = Date.now();
-    player.createdBy = player.lastUpdatedBy = player.user = user;
+    player.createdDate = player.lastUpdatedDate = new Date().toISOString();
+    player.createdBy = player.lastUpdatedBy = user;
 
     const table = process.env.PLAYERS_TABLE || '';
 

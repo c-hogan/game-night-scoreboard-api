@@ -43,7 +43,7 @@ custom:
   tableNames:
     groupsTable: ${self:custom.appShortName}-groups-table-${self:provider.stage}
     playersTable: ${self:custom.appShortName}-players-table-${self:provider.stage}
-    playLogTable: ${self:custom.appShortName}-playlog-table-${self:provider.stage}
+    playLogTable: ${self:custom.appShortName}-play-log-table-${self:provider.stage}
   apiName: ${self:custom.appShortName}-apigateway-${self:provider.stage}
   userPoolName: ${self:custom.appShortName}-userpool-${self:provider.stage}
   userPoolClientName: ${self:custom.appShortName}-userpoolclient-${self:provider.stage}
@@ -198,7 +198,7 @@ functions:
     events:
       - httpApi:
           method: POST
-          path: /v1/play-log
+          path: /v1/groups/{groupId}/play-log
           authorizer: serviceAuthorizer
     environment:
       PLAY_LOG_TABLE: ${self:custom.tableNames.playLogTable}
@@ -214,7 +214,7 @@ functions:
     events:
       - httpApi:
           method: GET
-          path: /v1/play-log/{groupId}/{id}
+          path: /v1/groups/{groupId}/play-log/{entryId}
           authorizer: serviceAuthorizer
     environment:
       PLAY_LOG_TABLE: ${self:custom.tableNames.playLogTable}
@@ -230,7 +230,7 @@ functions:
     events:
       - httpApi:
           method: PUT
-          path: /v1/play-log/{groupId}/{id}
+          path: /v1/groups/{groupId}/play-log/{entryId}
           authorizer: serviceAuthorizer
     environment:
       PLAY_LOG_TABLE: ${self:custom.tableNames.playLogTable}
@@ -248,7 +248,7 @@ functions:
     events:
       - httpApi:
           method: DELETE
-          path: /v1/play-log/{groupId}/{entryId}
+          path: /v1/groups/{groupId}/play-log/{entryId}
           authorizer: serviceAuthorizer
     environment:
       PLAY_LOG_TABLE: ${self:custom.tableNames.playLogTable}

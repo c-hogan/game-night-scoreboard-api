@@ -18,7 +18,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const entryId = event?.pathParameters?.entryId || false;
 
     if (!groupId || !entryId) {
-      throw new Error('Missing id in path. Request should contain both groupId and entryId (/v1/play-log/{groupId}/{entryId})');
+      throw new Error('Missing id in path. Request should contain both groupId and entryId (/v1/groups/{groupId}/play-log/{entryId})');
     }
 
     const user = event?.requestContext?.authorizer?.jwt?.claims?.email || '';
@@ -31,7 +31,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       throw new Error('Missing Player in PUT body');
     }
 
-    playLogEntry.lastUpdatedDate = Date.now();
+    playLogEntry.lastUpdatedDate = new Date().toISOString();
     playLogEntry.lastUpdatedBy = user;
 
     const table = process.env.PLAY_LOG_TABLE || '';

@@ -25,7 +25,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     group.id = nanoid();
-    group.createdDate = group.lastUpdatedDate = Date.now();
+    group.createdDate = group.lastUpdatedDate = new Date().toISOString();
     group.createdBy = group.lastUpdatedBy = user;
 
     const table = process.env.GROUPS_TABLE || '';

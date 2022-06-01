@@ -15,15 +15,20 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   let response: APIGatewayProxyResult;
 
   try {
+    const groupId = event?.pathParameters?.groupId || false;
     const requestBody = event?.body || '';
     const playLogEntry = JSON.parse(requestBody) as PlayLogEntry;
     const user = event?.requestContext?.authorizer?.jwt?.claims?.email || '';
 
     // TODO: Add validation
+    if (!groupId) {
+      throw new Error('Missing id in path. Request should contain groupId (/v1/groups/{groupId}/play-log');
+    }
     if (!playLogEntry) {
       throw new Error('Missing Play Log Entry in POST body.');
     }
 
+    playLogEntry.groupId = groupId;
     playLogEntry.id = nanoid();
     playLogEntry.createdDate = playLogEntry.lastUpdatedDate = new Date().toISOString();
     playLogEntry.createdBy = playLogEntry.lastUpdatedBy = user;
