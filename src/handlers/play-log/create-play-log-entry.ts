@@ -25,7 +25,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     playLogEntry.id = nanoid();
-    playLogEntry.createdDate = playLogEntry.lastUpdatedDate = Date.now();
+    playLogEntry.createdDate = playLogEntry.lastUpdatedDate = new Date().toISOString();
     playLogEntry.createdBy = playLogEntry.lastUpdatedBy = user;
 
     const table = process.env.PLAY_LOG_TABLE || '';

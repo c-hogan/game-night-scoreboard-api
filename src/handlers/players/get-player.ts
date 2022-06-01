@@ -22,7 +22,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const table = process.env.PLAYERS_TABLE || '';
 
-    const player = await dbService.get<Player>(table, id);
+    const player = await dbService.get<Player>(table, { id: id });
 
     if(!player) {
       response = {

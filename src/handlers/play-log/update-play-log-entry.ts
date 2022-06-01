@@ -14,12 +14,14 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   let response: APIGatewayProxyResult;
 
   try {
-    const id = event?.pathParameters?.id || false;
-    const user = event?.requestContext?.authorizer?.jwt?.claims?.email || '';
+    const groupId = event?.pathParameters?.groupId || false;
+    const entryId = event?.pathParameters?.entryId || false;
 
-    if (!id) {
-      throw new Error('Missing id in path');
+    if (!groupId || !entryId) {
+      throw new Error('Missing id in path. Request should contain both groupId and entryId (/v1/play-log/{groupId}/{entryId})');
     }
+
+    const user = event?.requestContext?.authorizer?.jwt?.claims?.email || '';
 
     const requestBody = event?.body || '';
     const playLogEntry = JSON.parse(requestBody) as PlayLogEntry;
@@ -34,7 +36,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const table = process.env.PLAY_LOG_TABLE || '';
 
-    const updatedPlayLogEntry = await dbService.update<PlayLogEntry>(table, id, playLogEntry);
+    const updatedPlayLogEntry = await dbService.update<PlayLogEntry>(table, { groupId: groupId, id: entryId }, playLogEntry);
 
     response = {
       statusCode: 200,

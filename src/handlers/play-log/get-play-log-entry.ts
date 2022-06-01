@@ -14,20 +14,21 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   let response: APIGatewayProxyResult;
 
   try {
-    const id = event?.pathParameters?.id || false;
+    const groupId = event?.pathParameters?.groupId || false;
+    const entryId = event?.pathParameters?.entryId || false;
 
-    if (!id) {
-      throw new Error('Missing id in path');
+    if (!groupId || !entryId) {
+      throw new Error('Missing id in path. Request should contain both groupId and entryId (/v1/play-log/{groupId}/{entryId})');
     }
 
     const table = process.env.PLAY_LOG_TABLE || '';
 
-    const playLogEntry = await dbService.get<PlayLogEntry>(table, id);
+    const playLogEntry = await dbService.get<PlayLogEntry>(table, { groupId: groupId, id: entryId });
 
     if(!playLogEntry) {
       response = {
         statusCode: 404,
-        body: `Play Log Entry ${id} not found.`
+        body: `Play Log Entry ${entryId} not found.`
       };
     } else {
       response = {

@@ -29,12 +29,12 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       throw new Error('Missing Group in PUT body');
     }
 
-    group.lastUpdatedDate = Date.now();
+    group.lastUpdatedDate = new Date().toISOString();
     group.lastUpdatedBy = user;
 
     const table = process.env.GROUPS_TABLE || '';
 
-    const updatedGroup = await dbService.update<Group>(table, id, group);
+    const updatedGroup = await dbService.update<Group>(table, { id: id }, group);
 
     response = {
       statusCode: 200,

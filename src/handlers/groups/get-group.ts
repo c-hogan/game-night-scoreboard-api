@@ -22,7 +22,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const table = process.env.GROUPS_TABLE || '';
 
-    const group = await dbService.get<Group>(table, id);
+    const group = await dbService.get<Group>(table, { id: id });
 
     if(!group) {
       response = {

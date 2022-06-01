@@ -21,7 +21,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const table = process.env.PLAYERS_TABLE || '';
 
-    await dbService.delete(table, id);
+    await dbService.delete(table, { id: id });
 
     response = {
       statusCode: 200,

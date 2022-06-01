@@ -29,12 +29,12 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       throw new Error('Missing Player in PUT body');
     }
 
-    player.lastUpdatedDate = Date.now();
+    player.lastUpdatedDate = new Date().toISOString();
     player.lastUpdatedBy = user;
 
     const table = process.env.PLAYERS_TABLE || '';
 
-    const updatedPlayer = await dbService.update<Player>(table, id, player);
+    const updatedPlayer = await dbService.update<Player>(table, { id: id }, player);
 
     response = {
       statusCode: 200,
