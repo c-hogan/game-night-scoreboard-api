@@ -26,8 +26,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return lambdaService.buildResponse(400, 'Missing id in path. Request should contain both groupId and playerId (/v1/groups/{groupId}/players/{playerId}).', origin);
     }
 
-    const requestBody = event?.body || '';
-    const player = JSON.parse(requestBody) as Player;
+    const eventBody = event?.body || '';
+    const player = lambdaService.parseEventBodyAsJson<Player>(eventBody);
 
     // TODO: Add validation
     if (!player) {
