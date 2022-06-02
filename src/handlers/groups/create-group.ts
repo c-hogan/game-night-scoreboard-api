@@ -21,7 +21,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     // TODO: Add validation
     if (!group) {
-      throw new Error('Missing Group in POST body.');
+      return {
+        statusCode: 400,
+        body: 'Missing Group in POST body.'
+      }
     }
 
     const id = nanoid();

@@ -18,7 +18,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const playerId = event?.pathParameters?.playerId || false;
 
     if (!groupId || !playerId) {
-      throw new Error('Missing id in path. Request should contain both groupId and entryId (/v1/groups/{groupId}/player/{playerId})');
+      return {
+        statusCode: 400,
+        body: 'Missing id in path. Request should contain both groupId and playerId (/v1/groups/{groupId}/players/{playerId}).'
+      };
     }
 
     const table = process.env.GNSB_TABLE || '';

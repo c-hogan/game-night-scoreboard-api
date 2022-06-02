@@ -18,7 +18,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const user = event?.requestContext?.authorizer?.jwt?.claims?.email || '';
 
     if (!id) {
-      throw new Error('Missing id in path');
+      return {
+        statusCode: 400,
+        body: 'Missing id in path'
+      };
     }
 
     const requestBody = event?.body || '';
@@ -26,7 +29,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     // TODO: Add validation
     if (!group) {
-      throw new Error('Missing Group in PUT body');
+      return {
+        statusCode: 400,
+        body: 'Missing Group in PUT body'
+      };
     }
 
     group.lastUpdatedDate = new Date().toISOString();

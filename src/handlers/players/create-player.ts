@@ -22,10 +22,16 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     // TODO: Add validation
     if (!groupId) {
-      throw new Error('Missing id in path. Request should contain groupId (/v1/groups/{groupId}/player');
+      return {
+        statusCode: 400,
+        body: 'Missing id in path. Request should contain groupId (/v1/groups/{groupId}/player).'
+      };
     }
     if (!player) {
-      throw new Error('Missing Player in POST body.');
+      return {
+        statusCode: 400,
+        body: 'Missing Player in POST body.'
+      };
     }
 
     const id = nanoid();

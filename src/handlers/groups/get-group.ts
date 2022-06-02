@@ -17,7 +17,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const id = event?.pathParameters?.id || false;
 
     if (!id) {
-      throw new Error('Missing id in path');
+      return {
+        statusCode: 400,
+        body: 'Missing id in path'
+      };
     }
 
     const table = process.env.GNSB_TABLE || '';

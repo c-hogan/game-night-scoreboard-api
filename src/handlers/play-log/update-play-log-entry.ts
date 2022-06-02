@@ -18,7 +18,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const entryId = event?.pathParameters?.entryId || false;
 
     if (!groupId || !entryId) {
-      throw new Error('Missing id in path. Request should contain both groupId and entryId (/v1/groups/{groupId}/play-log/{entryId})');
+      return {
+        statusCode: 400,
+        body: 'Missing id in path. Request should contain both groupId and entryId (/v1/groups/{groupId}/play-log/{entryId}).'
+      };
     }
 
     const user = event?.requestContext?.authorizer?.jwt?.claims?.email || '';
@@ -28,7 +31,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     // TODO: Add validation
     if (!playLogEntry) {
-      throw new Error('Missing Player in PUT body');
+      return {
+        statusCode: 400,
+        body: 'Missing Player in PUT body.'
+      };
     }
 
     playLogEntry.lastUpdatedDate = new Date().toISOString();
