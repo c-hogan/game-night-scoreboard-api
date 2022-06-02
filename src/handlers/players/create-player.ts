@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { nanoid } from 'nanoid';
-import { IDbService } from '../../interfaces';
+import { IDbService, ILambdaService } from '../../interfaces';
 import { diContainer } from '../../inversify.config';
 import { Player } from '../../models';
 import { InjectableTypes } from '../../types';
@@ -11,27 +11,25 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     environment: process.env.APP_ENVIRONMENT
   };
   logger.info('Incoming request', event?.requestContext || '');
+
   const dbService = diContainer.get<IDbService>(InjectableTypes.DynamoDbService);
-  let response: APIGatewayProxyResult;
+  const lambdaService = diContainer.get<ILambdaService>(InjectableTypes.LambdaService);
+
+  let origin = '';
 
   try {
+    origin = event?.headers?.origin || '';
     const groupId = event?.pathParameters?.groupId || false;
-    const requestBody = event?.body || '';
-    const player = JSON.parse(requestBody) as Player;
+    const eventBody = event?.body || '';
+    const player = lambdaService.parseEventBodyAsJson<Player>(eventBody);
     const user = event?.requestContext?.authorizer?.jwt?.claims?.email || '';
 
     // TODO: Add validation
     if (!groupId) {
-      return {
-        statusCode: 400,
-        body: 'Missing id in path. Request should contain groupId (/v1/groups/{groupId}/player).'
-      };
+      return lambdaService.buildResponse(400, 'Missing id in path. Request should contain groupId (/v1/groups/{groupId}/player).', origin);
     }
     if (!player) {
-      return {
-        statusCode: 400,
-        body: 'Missing Player in POST body.'
-      };
+      return lambdaService.buildResponse(400, 'Missing Player in POST body.', origin);
     }
 
     const id = nanoid();
@@ -45,17 +43,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     await dbService.put<Player>(table, 'GROUP#' + groupId, 'PLAYER#' + id, player);
 
-    response = {
-      statusCode: 200,
-      body: JSON.stringify(player)
-    };
-
+    return lambdaService.buildResponse(200, player, origin);
   } catch (err) {
     logger.error(err as Error);
-    response = {
-      statusCode: 500,
-      body: 'An error occured while creating Player.'
-    }
+    return lambdaService.buildResponse(500, 'An error occurred while creating Player.', origin);
   }
-  return response;
 }

@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { IDbService } from '../../interfaces';
+import { IDbService, ILambdaService } from '../../interfaces';
 import { diContainer } from '../../inversify.config';
 import { InjectableTypes } from '../../types';
 import * as logger from 'lambda-log';
@@ -10,18 +10,19 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     environment: process.env.APP_ENVIRONMENT
   };
   logger.info('Incoming request', event?.requestContext || '');
+
   const dbService = diContainer.get<IDbService>(InjectableTypes.DynamoDbService);
-  let response: APIGatewayProxyResult;
+  const lambdaService = diContainer.get<ILambdaService>(InjectableTypes.LambdaService);
+
+  let origin = '';
 
   try {
+    origin = event?.headers?.origin || '';
     const groupId = event?.pathParameters?.groupId || false;
     const entryId = event?.pathParameters?.entryId || false;
 
     if (!groupId || !entryId) {
-      return {
-        statusCode: 400,
-        body: 'Missing id in path. Request should contain both groupId and entryId (/v1/groups/{groupId}/play-log/{entryId}).'
-      };
+      return lambdaService.buildResponse(400, 'Missing id in path. Request should contain both groupId and entryId (/v1/groups/{groupId}/play-log/{entryId}).', origin);
     }
 
     const table = process.env.GNSB_TABLE || '';
@@ -29,23 +30,13 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const playLogEntry = await dbService.get<PlayLogEntry>(table, 'GROUP#' + groupId, 'LOG#' + entryId);
 
     if(!playLogEntry) {
-      response = {
-        statusCode: 404,
-        body: `Play Log Entry ${entryId} not found.`
-      };
+      return lambdaService.buildResponse(404, `Play Log Entry ${entryId} not found.`, origin);
     } else {
-      response = {
-        statusCode: 200,
-        body: JSON.stringify(playLogEntry)
-      };
+      return lambdaService.buildResponse(200, playLogEntry, origin);
     }
 
   } catch (err) {
     logger.error(err as Error);
-    response = {
-      statusCode: 500,
-      body: 'An error occured while creating Play Log Entry.'
-    }
+    return lambdaService.buildResponse(500, 'An error occurred while fetching Play Log Entry.', origin);
   }
-  return response;
 }

@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { IDbService } from '../../interfaces';
+import { IDbService, ILambdaService } from '../../interfaces';
 import { diContainer } from '../../inversify.config';
 import { InjectableTypes } from '../../types';
 import * as logger from 'lambda-log';
@@ -10,17 +10,18 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     environment: process.env.APP_ENVIRONMENT
   };
   logger.info('Incoming request', event?.requestContext || '');
+
   const dbService = diContainer.get<IDbService>(InjectableTypes.DynamoDbService);
-  let response: APIGatewayProxyResult;
+  const lambdaService = diContainer.get<ILambdaService>(InjectableTypes.LambdaService);
+
+  let origin = '';
 
   try {
+    origin = event?.headers?.origin || '';
     const id = event?.pathParameters?.id || false;
 
     if (!id) {
-      return {
-        statusCode: 400,
-        body: 'Missing id in path'
-      };
+      return lambdaService.buildResponse(400, 'Missing id in path.', origin);
     }
 
     const table = process.env.GNSB_TABLE || '';
@@ -28,23 +29,13 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const group = await dbService.get<Group>(table, 'GROUP#' + id, 'METADATA#' + id);
 
     if(!group) {
-      response = {
-        statusCode: 404,
-        body: `Group ${id} not found.`
-      };
+      return lambdaService.buildResponse(404, `Group ${id} not found.`, origin);
     } else {
-      response = {
-        statusCode: 200,
-        body: JSON.stringify(group)
-      };
+      return lambdaService.buildResponse(200, group, origin);
     }
 
   } catch (err) {
     logger.error(err as Error);
-    response = {
-      statusCode: 500,
-      body: JSON.stringify(err)
-    }
+    return lambdaService.buildResponse(500, 'An error occurred while fetching Group.', origin);
   }
-  return response;
 }

@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { IDbService } from '../../interfaces';
+import { IDbService, ILambdaService } from '../../interfaces';
 import { diContainer } from '../../inversify.config';
 import { InjectableTypes } from '../../types';
 import * as logger from 'lambda-log';
@@ -9,35 +9,28 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     environment: process.env.APP_ENVIRONMENT
   };
   logger.info('Incoming request', event?.requestContext || '');
+
   const dbService = diContainer.get<IDbService>(InjectableTypes.DynamoDbService);
-  let response: APIGatewayProxyResult;
+  const lambdaService = diContainer.get<ILambdaService>(InjectableTypes.DynamoDbService);
+
+  let origin = '';
 
   try {
+    origin = event?.headers?.origin || '';
     const groupId = event?.pathParameters?.groupId || false;
     const entryId = event?.pathParameters?.entryId || false;
 
     if (!groupId || !entryId) {
-      return {
-        statusCode: 400,
-        body: 'Missing id in path. Request should contain both groupId and entryId (/v1/groups/{groupId}/play-log/{entryId}).'
-      };
+      return lambdaService.buildResponse(400, 'Missing id in path. Request should contain both groupId and entryId (/v1/groups/{groupId}/play-log/{entryId}).', origin);
     }
 
     const table = process.env.GNSB_TABLE || '';
 
     await dbService.delete(table, 'GROUP#' + groupId, 'LOG#' + entryId);
 
-    response = {
-      statusCode: 200,
-      body: `Play Log Entry ${entryId} deleted.`
-    };
-
+    return lambdaService.buildResponse(200, `Play Log Entry ${entryId} deleted.`, origin);
   } catch (err) {
     logger.error(err as Error);
-    response = {
-      statusCode: 500,
-      body: 'An error occured while creating Play Log Entry.'
-    }
+    return lambdaService.buildResponse(500, 'An error occurred while deleting Play Log Entry.', origin);
   }
-  return response;
 }

@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { IDbService } from '../../interfaces';
+import { IDbService, ILambdaService } from '../../interfaces';
 import { diContainer } from '../../inversify.config';
 import { Group } from '../../models';
 import { InjectableTypes } from '../../types';
@@ -10,29 +10,27 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     environment: process.env.APP_ENVIRONMENT
   };
   logger.info('Incoming request', event?.requestContext || '');
+
   const dbService = diContainer.get<IDbService>(InjectableTypes.DynamoDbService);
-  let response: APIGatewayProxyResult;
+  const lambdaService = diContainer.get<ILambdaService>(InjectableTypes.LambdaService);
+
+  let origin = '';
 
   try {
+    origin = event?.headers?.origin || '';
     const id = event?.pathParameters?.id || false;
     const user = event?.requestContext?.authorizer?.jwt?.claims?.email || '';
 
     if (!id) {
-      return {
-        statusCode: 400,
-        body: 'Missing id in path'
-      };
+      return lambdaService.buildResponse(400, 'Missing id in path.', origin);
     }
 
-    const requestBody = event?.body || '';
-    const group = JSON.parse(requestBody) as Group;
+    const eventBody = event?.body || '';
+    const group = lambdaService.parseEventBodyAsJson<Group>(eventBody);
 
     // TODO: Add validation
     if (!group) {
-      return {
-        statusCode: 400,
-        body: 'Missing Group in PUT body'
-      };
+      return lambdaService.buildResponse(400, 'Missing Group in PUT body.', origin);
     }
 
     group.lastUpdatedDate = new Date().toISOString();
@@ -42,17 +40,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const updatedGroup = await dbService.update<Group>(table, 'GROUP#' + id, 'METADATA#' + id, group);
 
-    response = {
-      statusCode: 200,
-      body: JSON.stringify(updatedGroup)
-    };
-
+    return lambdaService.buildResponse(200, updatedGroup, origin);
   } catch (err) {
     logger.error(err as Error);
-    response = {
-      statusCode: 500,
-      body: JSON.stringify(err)
-    }
+    return lambdaService.buildResponse(500, 'An error occurred while updating Group.', origin);
   }
-  return response;
 }

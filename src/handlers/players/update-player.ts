@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { IDbService } from '../../interfaces';
+import { IDbService, ILambdaService } from '../../interfaces';
 import { diContainer } from '../../inversify.config';
 import { Player } from '../../models';
 import { InjectableTypes } from '../../types';
@@ -10,19 +10,20 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     environment: process.env.APP_ENVIRONMENT
   };
   logger.info('Incoming request', event?.requestContext || '');
+
   const dbService = diContainer.get<IDbService>(InjectableTypes.DynamoDbService);
-  let response: APIGatewayProxyResult;
+  const lambdaService = diContainer.get<ILambdaService>(InjectableTypes.LambdaService);
+
+  let origin = '';
 
   try {
+    origin = event?.headers?.origin || '';
     const groupId = event?.pathParameters?.groupId || false;
     const playerId = event?.pathParameters?.playerId || false;
     const user = event?.requestContext?.authorizer?.jwt?.claims?.email || '';
 
     if (!groupId || !playerId) {
-      return {
-        statusCode: 400,
-        body: 'Missing id in path. Request should contain both groupId and playerId (/v1/groups/{groupId}/players/{playerId}).'
-      };
+      return lambdaService.buildResponse(400, 'Missing id in path. Request should contain both groupId and playerId (/v1/groups/{groupId}/players/{playerId}).', origin);
     }
 
     const requestBody = event?.body || '';
@@ -30,10 +31,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     // TODO: Add validation
     if (!player) {
-      return {
-        statusCode: 400,
-        body: 'Missing Player in PUT body.'
-      };
+      return lambdaService.buildResponse(400, 'Missing Player in PUT body.', origin);
     }
 
     player.lastUpdatedDate = new Date().toISOString();
@@ -43,17 +41,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const updatedPlayer = await dbService.update<Player>(table, 'GROUP#' + groupId, 'PLAYER#' + playerId, player);
 
-    response = {
-      statusCode: 200,
-      body: JSON.stringify(updatedPlayer)
-    };
-
+    return lambdaService.buildResponse(200, updatedPlayer, origin);
   } catch (err) {
     logger.error(err as Error);
-    response = {
-      statusCode: 500,
-      body: JSON.stringify(err)
-    }
+    return lambdaService.buildResponse(500, 'An error occurred while updating Player.', origin);
   }
-  return response;
 }

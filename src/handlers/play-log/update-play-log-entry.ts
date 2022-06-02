@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { IDbService } from '../../interfaces';
+import { IDbService, ILambdaService } from '../../interfaces';
 import { diContainer } from '../../inversify.config';
 import { PlayLogEntry } from '../../models';
 import { InjectableTypes } from '../../types';
@@ -10,31 +10,29 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     environment: process.env.APP_ENVIRONMENT
   };
   logger.info('Incoming request', event?.requestContext || '');
+
   const dbService = diContainer.get<IDbService>(InjectableTypes.DynamoDbService);
-  let response: APIGatewayProxyResult;
+  const lambdaService = diContainer.get<ILambdaService>(InjectableTypes.LambdaService);
+
+  let origin = '';
 
   try {
+    origin = event?.headers?.origin || '';
     const groupId = event?.pathParameters?.groupId || false;
     const entryId = event?.pathParameters?.entryId || false;
 
     if (!groupId || !entryId) {
-      return {
-        statusCode: 400,
-        body: 'Missing id in path. Request should contain both groupId and entryId (/v1/groups/{groupId}/play-log/{entryId}).'
-      };
+      return lambdaService.buildResponse(400, 'Missing id in path. Request should contain both groupId and entryId (/v1/groups/{groupId}/play-log/{entryId}).', origin);
     }
 
     const user = event?.requestContext?.authorizer?.jwt?.claims?.email || '';
 
-    const requestBody = event?.body || '';
-    const playLogEntry = JSON.parse(requestBody) as PlayLogEntry;
+    const eventBody = event?.body || '';
+    const playLogEntry = lambdaService.parseEventBodyAsJson<PlayLogEntry>(eventBody);
 
     // TODO: Add validation
     if (!playLogEntry) {
-      return {
-        statusCode: 400,
-        body: 'Missing Player in PUT body.'
-      };
+      return lambdaService.buildResponse(400, 'Missing Player in PUT body.', origin);
     }
 
     playLogEntry.lastUpdatedDate = new Date().toISOString();
@@ -44,17 +42,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const updatedPlayLogEntry = await dbService.update<PlayLogEntry>(table, 'GROUP#' + groupId, 'LOG#' + entryId, playLogEntry);
 
-    response = {
-      statusCode: 200,
-      body: JSON.stringify(updatedPlayLogEntry)
-    };
-
+    return lambdaService.buildResponse(200, updatedPlayLogEntry, origin);
   } catch (err) {
     logger.error(err as Error);
-    response = {
-      statusCode: 500,
-      body: 'An error occured while creating Play Log Entry.'
-    }
+    return lambdaService.buildResponse(500, 'An error occurred while updating Play Log Entry.', origin);
   }
-  return response;
 }
