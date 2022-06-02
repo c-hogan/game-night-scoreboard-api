@@ -18,7 +18,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const user = event?.requestContext?.authorizer?.jwt?.claims?.email || '';
 
     if (!id) {
-      throw new Error('Missing id in path');
+      return {
+        statusCode: 400,
+        body: 'Missing id in path'
+      };
     }
 
     const requestBody = event?.body || '';
@@ -26,15 +29,18 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     // TODO: Add validation
     if (!group) {
-      throw new Error('Missing Group in PUT body');
+      return {
+        statusCode: 400,
+        body: 'Missing Group in PUT body'
+      };
     }
 
-    group.lastUpdatedDate = Date.now();
+    group.lastUpdatedDate = new Date().toISOString();
     group.lastUpdatedBy = user;
 
-    const table = process.env.GROUPS_TABLE || '';
+    const table = process.env.GNSB_TABLE || '';
 
-    const updatedGroup = await dbService.update<Group>(table, id, group);
+    const updatedGroup = await dbService.update<Group>(table, 'GROUP#' + id, 'METADATA#' + id, group);
 
     response = {
       statusCode: 200,

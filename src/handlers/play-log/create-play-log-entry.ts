@@ -2,7 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { nanoid } from 'nanoid';
 import { IDbService } from '../../interfaces';
 import { diContainer } from '../../inversify.config';
-import { Group } from '../../models';
+import { PlayLogEntry } from '../../models';
 import { InjectableTypes } from '../../types';
 import * as logger from 'lambda-log';
 
@@ -15,38 +15,46 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   let response: APIGatewayProxyResult;
 
   try {
+    const groupId = event?.pathParameters?.groupId || false;
     const requestBody = event?.body || '';
-    const group = JSON.parse(requestBody) as Group;
+    const playLogEntry = JSON.parse(requestBody) as PlayLogEntry;
     const user = event?.requestContext?.authorizer?.jwt?.claims?.email || '';
 
     // TODO: Add validation
-    if (!group) {
+    if (!groupId) {
       return {
         statusCode: 400,
-        body: 'Missing Group in POST body.'
+        body: 'Missing id in path. Request should contain groupId (/v1/groups/{groupId}/play-log).'
+      }
+    }
+    if (!playLogEntry) {
+      return {
+        statusCode: 400,
+        body: 'Missing Play Log Entry in POST body.'
       }
     }
 
     const id = nanoid();
 
-    group.id = id;
-    group.createdDate = group.lastUpdatedDate = new Date().toISOString();
-    group.createdBy = group.lastUpdatedBy = user;
+    playLogEntry.id = id;
+    playLogEntry.groupId = groupId;
+    playLogEntry.createdDate = playLogEntry.lastUpdatedDate = new Date().toISOString();
+    playLogEntry.createdBy = playLogEntry.lastUpdatedBy = user;
 
     const table = process.env.GNSB_TABLE || '';
 
-    await dbService.put<Group>(table, 'GROUP#' + id, 'METADATA#' + id, group);
+    await dbService.put<PlayLogEntry>(table, 'GROUP#' + groupId, 'LOG#' + id, playLogEntry);
 
     response = {
       statusCode: 200,
-      body: JSON.stringify(group)
+      body: JSON.stringify(playLogEntry)
     };
 
   } catch (err) {
     logger.error(err as Error);
     response = {
       statusCode: 500,
-      body: 'An error occured while creating Group.'
+      body: 'An error occured while creating Play Log Entry.'
     }
   }
   return response;

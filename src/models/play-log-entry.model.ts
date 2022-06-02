@@ -10,7 +10,7 @@ export default interface PlayLogEntry extends DbItem {
 
   winnerIds: string[];
 
-  date: Date;
+  date: string; // ISO-8601 YYYY-MM-DDThh:mm:ss.sZ
 
   notes: string;
 

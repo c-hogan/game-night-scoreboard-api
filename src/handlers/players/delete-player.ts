@@ -13,19 +13,23 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   let response: APIGatewayProxyResult;
 
   try {
-    const id = event?.pathParameters?.id || false;
+    const groupId = event?.pathParameters?.groupId || false;
+    const playerId = event?.pathParameters?.playerId || false;
 
-    if (!id) {
-      throw new Error('Missing id in path');
+    if (!groupId || !playerId) {
+      return {
+        statusCode: 400,
+        body: 'Missing id in path. Request should contain both groupId and playerId (/v1/groups/{groupId}/players/{playerId}).'
+      };
     }
 
-    const table = process.env.PLAYERS_TABLE || '';
+    const table = process.env.GNSB_TABLE || '';
 
-    await dbService.delete(table, id);
+    await dbService.delete(table, 'GROUP#' + groupId, 'PLAYER#' + playerId);
 
     response = {
       statusCode: 200,
-      body: `Player ${id} deleted.`
+      body: `Player ${playerId} deleted.`
     };
 
   } catch (err) {

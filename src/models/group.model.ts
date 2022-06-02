@@ -19,4 +19,6 @@ export default interface Group extends DbItem {
 
   settings: GroupSettings;
 
+  playerIds: string[];
+
 }

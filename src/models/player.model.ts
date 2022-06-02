@@ -16,12 +16,10 @@ interface PlayerAvatar {
 
 export default interface Player extends DbItem {
 
-  user: string;
-
   name: string;
 
   avatar: PlayerAvatar;
 
-  groups: string[];
+  groupId: string;
 
 }
