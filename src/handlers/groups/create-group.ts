@@ -24,13 +24,15 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       throw new Error('Missing Group in POST body.');
     }
 
-    group.id = nanoid();
+    const id = nanoid();
+
+    group.id = id;
     group.createdDate = group.lastUpdatedDate = new Date().toISOString();
     group.createdBy = group.lastUpdatedBy = user;
 
-    const table = process.env.GROUPS_TABLE || '';
+    const table = process.env.GNSB_TABLE || '';
 
-    await dbService.put<Group>(table, group);
+    await dbService.put<Group>(table, 'GROUP#' + id, 'METADATA#' + id, group);
 
     response = {
       statusCode: 200,

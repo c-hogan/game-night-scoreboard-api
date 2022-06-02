@@ -20,9 +20,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       throw new Error('Missing id in path');
     }
 
-    const table = process.env.GROUPS_TABLE || '';
+    const table = process.env.GNSB_TABLE || '';
 
-    const group = await dbService.get<Group>(table, { id: id });
+    const group = await dbService.get<Group>(table, 'GROUP#' + id, 'METADATA#' + id);
 
     if(!group) {
       response = {

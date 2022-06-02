@@ -20,6 +20,6 @@ export default interface Player extends DbItem {
 
   avatar: PlayerAvatar;
 
-  groups: string[];
+  groupId: string;
 
 }

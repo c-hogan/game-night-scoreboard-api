@@ -32,9 +32,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     group.lastUpdatedDate = new Date().toISOString();
     group.lastUpdatedBy = user;
 
-    const table = process.env.GROUPS_TABLE || '';
+    const table = process.env.GNSB_TABLE || '';
 
-    const updatedGroup = await dbService.update<Group>(table, { id: id }, group);
+    const updatedGroup = await dbService.update<Group>(table, 'GROUP#' + id, 'METADATA#' + id, group);
 
     response = {
       statusCode: 200,

@@ -28,14 +28,16 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       throw new Error('Missing Play Log Entry in POST body.');
     }
 
+    const id = nanoid();
+
+    playLogEntry.id = id;
     playLogEntry.groupId = groupId;
-    playLogEntry.id = nanoid();
     playLogEntry.createdDate = playLogEntry.lastUpdatedDate = new Date().toISOString();
     playLogEntry.createdBy = playLogEntry.lastUpdatedBy = user;
 
-    const table = process.env.PLAY_LOG_TABLE || '';
+    const table = process.env.GNSB_TABLE || '';
 
-    await dbService.put<PlayLogEntry>(table, playLogEntry);
+    await dbService.put<PlayLogEntry>(table, 'GROUP#' + groupId, 'LOG#' + id, playLogEntry);
 
     response = {
       statusCode: 200,

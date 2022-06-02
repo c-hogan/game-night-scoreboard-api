@@ -20,9 +20,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       throw new Error('Missing id in path. Request should contain both groupId and entryId (/v1/groups/{groupId}/play-log/{entryId})');
     }
 
-    const table = process.env.PLAY_LOG_TABLE || '';
+    const table = process.env.GNSB_TABLE || '';
 
-    await dbService.delete(table, { groupId: groupId, id: entryId });
+    await dbService.delete(table, 'GROUP#' + groupId, 'LOG#' + entryId);
 
     response = {
       statusCode: 200,

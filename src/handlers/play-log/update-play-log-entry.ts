@@ -34,9 +34,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     playLogEntry.lastUpdatedDate = new Date().toISOString();
     playLogEntry.lastUpdatedBy = user;
 
-    const table = process.env.PLAY_LOG_TABLE || '';
+    const table = process.env.GNSB_TABLE || '';
 
-    const updatedPlayLogEntry = await dbService.update<PlayLogEntry>(table, { groupId: groupId, id: entryId }, playLogEntry);
+    const updatedPlayLogEntry = await dbService.update<PlayLogEntry>(table, 'GROUP#' + groupId, 'LOG#' + entryId, playLogEntry);
 
     response = {
       statusCode: 200,

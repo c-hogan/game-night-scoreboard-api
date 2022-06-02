@@ -14,11 +14,12 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   let response: APIGatewayProxyResult;
 
   try {
-    const id = event?.pathParameters?.id || false;
+    const groupId = event?.pathParameters?.groupId || false;
+    const playerId = event?.pathParameters?.playerId || false;
     const user = event?.requestContext?.authorizer?.jwt?.claims?.email || '';
 
-    if (!id) {
-      throw new Error('Missing id in path');
+    if (!groupId || !playerId) {
+      throw new Error('Missing id in path. Request should contain both groupId and entryId (/v1/groups/{groupId}/players/{playerId})');
     }
 
     const requestBody = event?.body || '';
@@ -32,9 +33,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     player.lastUpdatedDate = new Date().toISOString();
     player.lastUpdatedBy = user;
 
-    const table = process.env.PLAYERS_TABLE || '';
+    const table = process.env.GNSB_TABLE || '';
 
-    const updatedPlayer = await dbService.update<Player>(table, { id: id }, player);
+    const updatedPlayer = await dbService.update<Player>(table, 'GROUP#' + groupId, 'PLAYER#' + playerId, player);
 
     response = {
       statusCode: 200,

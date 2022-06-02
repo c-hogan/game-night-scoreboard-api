@@ -28,31 +28,43 @@ export class DynamoDbService implements IDbService {
     this._docClient = DynamoDBDocumentClient.from(this._ddbClient);
   }
 
-  public put = async <T extends DbItem>(tableName: string, obj: T): Promise<T> => {
+  public put = async <T extends DbItem>(tableName: string, partitionKey:string, sortKey: string, obj: T): Promise<T> => {
+
+    const item = {
+      partitionKey: partitionKey,
+      sortKey: sortKey,
+      ...obj
+    };
 
     await this._docClient.send(
       new PutCommand({
         TableName: tableName,
-        Item: obj
+        Item: item
       })
     );
 
     return obj;
   }
 
-  public get = async <T extends DbItem>(tableName: string, key: {[key: string]: string}): Promise<T> => {
+  public get = async <T extends DbItem>(tableName: string, partitionKey: string, sortKey: string): Promise<T> => {
 
     const res = await this._docClient.send(
       new GetCommand({
         TableName: tableName,
-        Key: key
+        Key: {
+          partitionKey: partitionKey,
+          sortKey: sortKey
+        }
       })
     );
+
+    delete res.Item?.partitionKey;
+    delete res.Item?.sortKey;
 
     return res.Item as T;
   }
 
-  public update = async <T extends DbItem>(tableName: string, key: {[key: string]: string}, obj: any): Promise<T> => {
+  public update = async <T extends DbItem>(tableName: string, partitionKey: string, sortKey: string, obj: any): Promise<T> => {
 
     const objKeys = Object.keys(obj).filter(k => k !== 'id');
 
@@ -71,7 +83,10 @@ export class DynamoDbService implements IDbService {
     const res = await this._docClient.send(
       new UpdateCommand({
         TableName: tableName,
-        Key: key,
+        Key: {
+          partitionKey: partitionKey,
+          sortKey: sortKey
+        },
         UpdateExpression: updateExpression,
         ExpressionAttributeNames: attributeNames,
         ExpressionAttributeValues: attributeValues,
@@ -79,15 +94,21 @@ export class DynamoDbService implements IDbService {
       })
     );
 
+    delete res.Attributes?.partitionKey;
+    delete res.Attributes?.sortKey;
+
     return res.Attributes as T;
   }
 
-  public delete = async (tableName: string, key: {[key: string]: string}): Promise<boolean> => {
+  public delete = async (tableName: string, partitionKey:string, sortKey: string): Promise<boolean> => {
 
     await this._docClient.send(
       new DeleteCommand({
         TableName: tableName,
-        Key: key
+        Key: {
+          partitionKey: partitionKey,
+          sortKey: sortKey
+        }
       })
     );
 

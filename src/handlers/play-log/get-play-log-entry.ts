@@ -21,9 +21,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       throw new Error('Missing id in path. Request should contain both groupId and entryId (/v1/groups/{groupId}/play-log/{entryId})');
     }
 
-    const table = process.env.PLAY_LOG_TABLE || '';
+    const table = process.env.GNSB_TABLE || '';
 
-    const playLogEntry = await dbService.get<PlayLogEntry>(table, { groupId: groupId, id: entryId });
+    const playLogEntry = await dbService.get<PlayLogEntry>(table, 'GROUP#' + groupId, 'LOG#' + entryId);
 
     if(!playLogEntry) {
       response = {

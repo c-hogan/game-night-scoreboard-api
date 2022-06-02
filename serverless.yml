@@ -41,9 +41,7 @@ package:
 custom:
   appShortName: gnsb
   tableNames:
-    groupsTable: ${self:custom.appShortName}-groups-table-${self:provider.stage}
-    playersTable: ${self:custom.appShortName}-players-table-${self:provider.stage}
-    playLogTable: ${self:custom.appShortName}-play-log-table-${self:provider.stage}
+    gnsbTable: ${self:custom.appShortName}-table-${self:provider.stage}
   apiName: ${self:custom.appShortName}-apigateway-${self:provider.stage}
   userPoolName: ${self:custom.appShortName}-userpool-${self:provider.stage}
   userPoolClientName: ${self:custom.appShortName}-userpoolclient-${self:provider.stage}
@@ -65,13 +63,13 @@ functions:
           path: /v1/groups
           authorizer: serviceAuthorizer
     environment:
-      GROUPS_TABLE: ${self:custom.tableNames.groupsTable}
+      GNSB_TABLE: ${self:custom.tableNames.gnsbTable}
     iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-createGroup-lambdaRole
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:PutItem
-        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.groupsTable}"
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.gnsbTable}"
 
   getGroup:
     handler: src/handlers/groups/get-group.handler
@@ -81,13 +79,13 @@ functions:
           path: /v1/groups/{id}
           authorizer: serviceAuthorizer
     environment:
-      GROUPS_TABLE: ${self:custom.tableNames.groupsTable}
+      GNSB_TABLE: ${self:custom.tableNames.gnsbTable}
     iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-getGroup-lambdaRole
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:GetItem
-        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.groupsTable}"
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.gnsbTable}"
 
   updateGroup:
     handler: src/handlers/groups/update-group.handler
@@ -97,7 +95,7 @@ functions:
           path: /v1/groups/{id}
           authorizer: serviceAuthorizer
     environment:
-      GROUPS_TABLE: ${self:custom.tableNames.groupsTable}
+      GNSB_TABLE: ${self:custom.tableNames.gnsbTable}
     iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-updateGroup-lambdaRole
     iamRoleStatements:
       - Effect: Allow
@@ -105,24 +103,24 @@ functions:
           - dynamodb:GetItem
           - dynamodb:PutItem
           - dynamodb:UpdateItem
-        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.groupsTable}"
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.gnsbTable}"
 
-  deleteGroup:
-    handler: src/handlers/groups/delete-group.handler
-    events:
-      - httpApi:
-          method: DELETE
-          path: /v1/groups/{id}
-          authorizer: serviceAuthorizer
-    environment:
-      GROUPS_TABLE: ${self:custom.tableNames.groupsTable}
-    iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-deleteGroup-lambdaRole
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:GetItem
-          - dynamodb:DeleteItem
-        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.groupsTable}"
+  # deleteGroup:
+  #   handler: src/handlers/groups/delete-group.handler
+  #   events:
+  #     - httpApi:
+  #         method: DELETE
+  #         path: /v1/groups/{id}
+  #         authorizer: serviceAuthorizer
+  #   environment:
+  #     GNSB_TABLE: ${self:custom.tableNames.gnsbTable}
+  #   iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-deleteGroup-lambdaRole
+  #   iamRoleStatements:
+  #     - Effect: Allow
+  #       Action:
+  #         - dynamodb:GetItem
+  #         - dynamodb:DeleteItem
+  #       Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.gnsbTable}"
 
   # Player Functions
   createPlayer:
@@ -130,42 +128,42 @@ functions:
     events:
       - httpApi:
           method: POST
-          path: /v1/players
+          path: /v1/groups/{groupId}/players
           authorizer: serviceAuthorizer
     environment:
-      PLAYERS_TABLE: ${self:custom.tableNames.playersTable}
+      GNSB_TABLE: ${self:custom.tableNames.gnsbTable}
     iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-createPlayer-lambdaRole
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:PutItem
-        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.playersTable}"
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.gnsbTable}"
 
   getPlayer:
     handler: src/handlers/players/get-player.handler
     events:
       - httpApi:
           method: GET
-          path: /v1/players/{id}
+          path: /v1/groups/{groupId}/players/{playerId}
           authorizer: serviceAuthorizer
     environment:
-      PLAYERS_TABLE: ${self:custom.tableNames.playersTable}
+      GNSB_TABLE: ${self:custom.tableNames.gnsbTable}
     iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-getPlayer-lambdaRole
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:GetItem
-        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.playersTable}"
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.gnsbTable}"
 
   updatePlayer:
     handler: src/handlers/players/update-player.handler
     events:
       - httpApi:
           method: PUT
-          path: /v1/players/{id}
+          path: /v1/groups/{groupId}/players/{playerId}
           authorizer: serviceAuthorizer
     environment:
-      PLAYERS_TABLE: ${self:custom.tableNames.playersTable}
+      GNSB_TABLE: ${self:custom.tableNames.gnsbTable}
     iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-updatePlayer-lambdaRole
     iamRoleStatements:
       - Effect: Allow
@@ -173,24 +171,24 @@ functions:
           - dynamodb:GetItem
           - dynamodb:PutItem
           - dynamodb:UpdateItem
-        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.playersTable}"
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.gnsbTable}"
 
   deletePlayer:
     handler: src/handlers/players/delete-player.handler
     events:
       - httpApi:
           method: DELETE
-          path: /v1/players/{id}
+          path: /v1/groups/{groupId}/players/{playerId}
           authorizer: serviceAuthorizer
     environment:
-      PLAYERS_TABLE: ${self:custom.tableNames.playersTable}
+      GNSB_TABLE: ${self:custom.tableNames.gnsbTable}
     iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-deletePlayer-lambdaRole
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:GetItem
           - dynamodb:DeleteItem
-        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.playersTable}"
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.gnsbTable}"
 
   # Play Log Functions
   createPlayLogEntry:
@@ -201,13 +199,13 @@ functions:
           path: /v1/groups/{groupId}/play-log
           authorizer: serviceAuthorizer
     environment:
-      PLAY_LOG_TABLE: ${self:custom.tableNames.playLogTable}
+      GNSB_TABLE: ${self:custom.tableNames.gnsbTable}
     iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-createPlayLogEntry-lambdaRole
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:PutItem
-        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.playLogTable}"
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.gnsbTable}"
 
   getPlayLogEntry:
     handler: src/handlers/play-log/get-play-log-entry.handler
@@ -217,13 +215,13 @@ functions:
           path: /v1/groups/{groupId}/play-log/{entryId}
           authorizer: serviceAuthorizer
     environment:
-      PLAY_LOG_TABLE: ${self:custom.tableNames.playLogTable}
+      GNSB_TABLE: ${self:custom.tableNames.gnsbTable}
     iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-getPlayLogEntry-lambdaRole
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:GetItem
-        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.playLogTable}"
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.gnsbTable}"
 
   updatePlayLogEntry:
     handler: src/handlers/play-log/update-play-log-entry.handler
@@ -233,7 +231,7 @@ functions:
           path: /v1/groups/{groupId}/play-log/{entryId}
           authorizer: serviceAuthorizer
     environment:
-      PLAY_LOG_TABLE: ${self:custom.tableNames.playLogTable}
+      GNSB_TABLE: ${self:custom.tableNames.gnsbTable}
     iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-updatePlayLogEntry-lambdaRole
     iamRoleStatements:
       - Effect: Allow
@@ -241,7 +239,7 @@ functions:
           - dynamodb:GetItem
           - dynamodb:PutItem
           - dynamodb:UpdateItem
-        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.playLogTable}"
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.gnsbTable}"
 
   deletePlayLogEntry:
     handler: src/handlers/play-log/delete-play-log-entry.handler
@@ -251,55 +249,32 @@ functions:
           path: /v1/groups/{groupId}/play-log/{entryId}
           authorizer: serviceAuthorizer
     environment:
-      PLAY_LOG_TABLE: ${self:custom.tableNames.playLogTable}
+      GNSB_TABLE: ${self:custom.tableNames.gnsbTable}
     iamRoleStatementsName: ${self:custom.appShortName}-${self:provider.stage}-deletePlayLogEntry-lambdaRole
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:GetItem
           - dynamodb:DeleteItem
-        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.playLogTable}"
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableNames.gnsbTable}"
 
 resources:
   Resources:
-    groupsTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:custom.tableNames.groupsTable}
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
-        KeySchema:
-          - AttributeName: id
-            KeyType: HASH
 
-    playersTable:
+    gnsbTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.tableNames.playersTable}
+        TableName: ${self:custom.tableNames.gnsbTable}
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
-          - AttributeName: id
+          - AttributeName: partitionKey
+            AttributeType: S
+          - AttributeName: sortKey
             AttributeType: S
         KeySchema:
-          - AttributeName: id
+          - AttributeName: partitionKey
             KeyType: HASH
-
-    playLogTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:custom.tableNames.playLogTable}
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: groupId
-            AttributeType: S
-          - AttributeName: id
-            AttributeType: S
-        KeySchema:
-          - AttributeName: groupId
-            KeyType: HASH
-          - AttributeName: id
+          - AttributeName: sortKey
             KeyType: RANGE
 
     serviceUserPool:

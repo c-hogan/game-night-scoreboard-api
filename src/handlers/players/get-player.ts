@@ -14,20 +14,21 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   let response: APIGatewayProxyResult;
 
   try {
-    const id = event?.pathParameters?.id || false;
+    const groupId = event?.pathParameters?.groupId || false;
+    const playerId = event?.pathParameters?.playerId || false;
 
-    if (!id) {
-      throw new Error('Missing id in path');
+    if (!groupId || !playerId) {
+      throw new Error('Missing id in path. Request should contain both groupId and entryId (/v1/groups/{groupId}/player/{playerId})');
     }
 
-    const table = process.env.PLAYERS_TABLE || '';
+    const table = process.env.GNSB_TABLE || '';
 
-    const player = await dbService.get<Player>(table, { id: id });
+    const player = await dbService.get<Player>(table, 'GROUP#' + groupId, 'PLAYER#' + playerId);
 
     if(!player) {
       response = {
         statusCode: 404,
-        body: `Player ${id} not found.`
+        body: `Player ${playerId} not found.`
       };
     } else {
       response = {
