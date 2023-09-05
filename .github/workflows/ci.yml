@@ -1,46 +1,46 @@
-name: CI
-env:
-  NODE_VERSION: '14'
+# name: CI
+# env:
+#   NODE_VERSION: '14'
 
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+# on:
+#   push:
+#     branches: [main]
+#   pull_request:
+#     branches: [main]
 
-jobs:
-  ci:
-    runs-on: [ubuntu-latest]
+# jobs:
+#   ci:
+#     runs-on: [ubuntu-latest]
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v3
 
-      - name: Use NodeJS ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v2
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'yarn'
+#       - name: Use NodeJS ${{ env.NODE_VERSION }}
+#         uses: actions/setup-node@v2
+#         with:
+#           node-version: ${{ env.NODE_VERSION }}
+#           cache: 'yarn'
 
-      # - name: Get Yarn cache directory path
-      #   id: yarn-cache-dir-path
-      #   run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
+#       # - name: Get Yarn cache directory path
+#       #   id: yarn-cache-dir-path
+#       #   run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
 
-      # - name: Check dependencies cache
-      #   uses: actions/cache@v3
-      #   id: yarn-cache
-      #   with:
-      #     path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-      #     key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-yarn-
+#       # - name: Check dependencies cache
+#       #   uses: actions/cache@v3
+#       #   id: yarn-cache
+#       #   with:
+#       #     path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+#       #     key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+#       #     restore-keys: |
+#       #       ${{ runner.os }}-yarn-
 
-      - name: Install dependencies
-        if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: yarn install
+#       - name: Install dependencies
+#         if: steps.yarn-cache.outputs.cache-hit != 'true'
+#         run: yarn install
 
-      - name: Lint
-        run: yarn lint
+#       - name: Lint
+#         run: yarn lint
 
-      # - name: Unit tests
-      #   run: yarn test
+#       # - name: Unit tests
+#       #   run: yarn test

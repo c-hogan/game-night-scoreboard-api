@@ -1,62 +1,62 @@
-name: Manual Deploy
-env:
-  NODE_VERSION: '14'
-  AWS_REGION: 'us-east-2'
+# name: Manual Deploy
+# env:
+#   NODE_VERSION: '14'
+#   AWS_REGION: 'us-east-2'
 
-on:
-  workflow_dispatch:
-    inputs:
-      stage:
-        description: Deployment stage (dev, beta, or prod)
-        required: true
-        default: beta
-      use-cache:
-        description: Use dependencies cache (true or false)
-        required: true
-        default: true
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       stage:
+#         description: Deployment stage (dev, beta, or prod)
+#         required: true
+#         default: beta
+#       use-cache:
+#         description: Use dependencies cache (true or false)
+#         required: true
+#         default: true
 
-permissions:
-  id-token: write
+# permissions:
+#   id-token: write
 
-jobs:
-  deploy:
-    name: Serverless Deploy
+# jobs:
+#   deploy:
+#     name: Serverless Deploy
 
-    runs-on: [ubuntu-latest]
+#     runs-on: [ubuntu-latest]
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v3
 
-      - name: Use NodeJS ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v2
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'yarn'
+#       - name: Use NodeJS ${{ env.NODE_VERSION }}
+#         uses: actions/setup-node@v2
+#         with:
+#           node-version: ${{ env.NODE_VERSION }}
+#           cache: 'yarn'
 
-      - name: Get Yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
+#       - name: Get Yarn cache directory path
+#         id: yarn-cache-dir-path
+#         run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
 
-      - name: Check dependencies cache
-        if: github.event.inputs.use-cache == 'true'
-        uses: actions/cache@v3
-        id: yarn-cache
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
+#       - name: Check dependencies cache
+#         if: github.event.inputs.use-cache == 'true'
+#         uses: actions/cache@v3
+#         id: yarn-cache
+#         with:
+#           path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+#           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+#           restore-keys: |
+#             ${{ runner.os }}-yarn-
 
-      - name: Install dependencies
-        if: github.event.inputs.use-cache != 'true' || steps.yarn-cache.outputs.cache-hit != 'true'
-        run: yarn install
+#       - name: Install dependencies
+#         if: github.event.inputs.use-cache != 'true' || steps.yarn-cache.outputs.cache-hit != 'true'
+#         run: yarn install
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: ${{ secrets.AWS_SERVERLESS_DEPLOY_ROLE }}
-          aws-region: ${{ env.AWS_REGION  }}
+#       - name: Configure AWS credentials
+#         uses: aws-actions/configure-aws-credentials@v1
+#         with:
+#           role-to-assume: ${{ secrets.AWS_SERVERLESS_DEPLOY_ROLE }}
+#           aws-region: ${{ env.AWS_REGION  }}
 
-      - name: Deploy
-        run: yarn deploy --stage=${{ github.event.inputs.stage }}
+#       - name: Deploy
+#         run: yarn deploy --stage=${{ github.event.inputs.stage }}

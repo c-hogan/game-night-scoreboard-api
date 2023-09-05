@@ -1,2 +1,2 @@
 # game-night-scoreboard-api
-NodeJS API for Game Night Scoreboard App
+Serverless API for Game Night Scoreboard App
