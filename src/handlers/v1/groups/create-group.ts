@@ -10,7 +10,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
   try {
     const requestBody = event?.body || '';
-    const group = JSON.parse(requestBody) as Group;
+    const group = JSON.parse(requestBody) as GroupMetadata;
     const user = event.requestContext.authorizer?.iam?.cognitoIdentity?.identityId || '';
 
     // TODO: Add validation
@@ -38,13 +38,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       dbClient = getDbClient();
     }
 
-    await createItem<Group>(group, dbClient);
-
-    const newGroup = group as Group;
+    const result = await createItem<GroupMetadata>(group, dbClient);
 
     response = {
       statusCode: 200,
-      body: JSON.stringify(newGroup),
+      body: JSON.stringify(result),
     };
 
   } catch (err) {

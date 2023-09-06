@@ -9,6 +9,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
   try {
     const groupId = event?.pathParameters?.groupId || false;
+    const user = event.requestContext.authorizer?.iam?.cognitoIdentity?.identityId || '';
 
     if (!groupId) {
       return {
@@ -26,9 +27,24 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       dbClient = getDbClient();
     }
 
-    const group = await getItem<Group>(key, dbClient);
+    const attributes = ['name', 'settings', 'players'];
 
-    // TODO: Add privacy check
+    const group = await getItem<GroupMetadata>(key, dbClient, attributes);
+
+    if(group.settings.privacyType === 'public' || group.settings.administratorIds.includes(user) || group.settings.viewerIds.includes(user)){
+
+      response = {
+        statusCode: 200,
+        body: JSON.stringify(group),
+      };
+
+    } else {
+
+      response = {
+        statusCode: 403,
+        body: 'Unauthorized.',
+      };
+    }
 
     if(!group) {
       response = {

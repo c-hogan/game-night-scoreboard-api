@@ -5,6 +5,14 @@ import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
 import { Table } from 'sst/node/table';
 
 const TABLE_NAME = Table.table.tableName;
+const DB_ONLY_PROPERTIES = [
+  'pk',
+  'sk',
+  'createdBy',
+  'createdDate',
+  'lastUpdatedBy',
+  'lastUpdatedDate',
+];
 
 export const getDbClient = () => {
 
@@ -26,26 +34,37 @@ export const createItem = async <T extends DbItem>(item: T, dbClient: DynamoDBDo
     Item: item,
   });
 
-  const response = await dbClient.send(command);
+  await dbClient.send(command);
 
-  return response.Attributes as T;
+  for(const prop in DB_ONLY_PROPERTIES) {
+    delete item[prop as keyof T];
+  }
+
+  return item as T;
 };
 
-export const getItem = async <T extends DbItem>(key: DbKey, dbClient: DynamoDBDocumentClient): Promise<T> => {
+export const getItem = async <T>(key: DbKey, dbClient: DynamoDBDocumentClient, projectionAttributes?: string[]): Promise<T> => {
   const command = new GetCommand({
     TableName: TABLE_NAME,
     Key: key,
   });
 
-  const response = await dbClient.send(command);
+  if(projectionAttributes) {
+    const formattedAttributes = projectionAttributes.map((attr, index) => `#field${index}`);
+    const attributeNames = projectionAttributes.reduce((accumulator, property, index) => ({
+      ...accumulator,
+      [`#field${index}`]: property,
+    }), {});
+    command.input.ExpressionAttributeNames = attributeNames;
+    command.input.ProjectionExpression = formattedAttributes.join(', ');
+  }
 
-  delete response.Item?.pk;
-  delete response.Item?.sk;
+  const response = await dbClient.send(command);
 
   return response.Item as T;
 };
 
-export const queryTable = async <T extends DbItem>(partitionKey: string, dataType: string, dbClient: DynamoDBDocumentClient): Promise<T[]> => {
+export const queryTable = async <T>(partitionKey: string, dataType: string, dbClient: DynamoDBDocumentClient, projectionAttributes?: string[]): Promise<T[]> => {
 
   let conditionExpression, attributeValues;
 
@@ -67,6 +86,16 @@ export const queryTable = async <T extends DbItem>(partitionKey: string, dataTyp
     KeyConditionExpression: conditionExpression,
     ExpressionAttributeValues: attributeValues,
   });
+
+  if(projectionAttributes) {
+    const formattedAttributes = projectionAttributes.map((attr, index) => `#field${index}`);
+    const attributeNames = projectionAttributes.reduce((accumulator, property, index) => ({
+      ...accumulator,
+      [`#field${index}`]: property,
+    }), {});
+    command.input.ExpressionAttributeNames = attributeNames;
+    command.input.ProjectionExpression = formattedAttributes.join(', ');
+  }
 
   const results: T[] = [];
 
@@ -109,8 +138,9 @@ export const updateItem = async <T extends DbItem>(key: DbKey, item: T, dbClient
 
   const response = await dbClient.send(command);
 
-  delete response.Attributes?.pk;
-  delete response.Attributes?.sk;
+  for(const prop of DB_ONLY_PROPERTIES) {
+    delete response.Attributes?.[prop];
+  }
 
   return response.Attributes as T;
 };

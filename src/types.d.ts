@@ -14,22 +14,18 @@ interface DbItem extends DbKey {
 interface GroupSettings {
     privacyType: 'public' | 'private';
     administratorIds: string[];
+    viewerIds: string[];
 }
 
-// interface Group extends DbItem {
-//     name: string;
-//     settings: GroupSettings;
-// }
-
-interface GroupDbItem extends DbItem {
+interface GroupMetadata extends DbItem {
     name: string;
     settings: GroupSettings;
+    players: Player[];
 }
 
-
-interface Player extends DbItem {
+interface Player {
+    id: string;
     name: string;
-    groupId: string;
 }
 
 interface PlayLogEntry extends DbItem {

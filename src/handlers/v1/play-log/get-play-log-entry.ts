@@ -10,6 +10,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   try {
     const groupId = event?.pathParameters?.groupId || false;
     const entryId = event?.pathParameters?.entryId || false;
+    const user = event.requestContext.authorizer?.iam?.cognitoIdentity?.identityId || '';
 
     if (!groupId || !entryId) {
       return {
@@ -18,28 +19,45 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       };
     }
 
-    const key = {
-      pk: 'GROUP#' + groupId,
-      sk: 'LOG#' + entryId,
-    };
-
     if(!dbClient) {
       dbClient = getDbClient();
     }
 
-    const playLogEntry = await getItem<PlayLogEntry>(key, dbClient);
+    const groupKey = {
+      pk: 'GROUP#' + groupId,
+      sk: 'METADATA#' + groupId,
+    };
 
-    // TODO: Add privacy check
+    const groupSettings = (await getItem<GroupMetadata>(groupKey, dbClient, ['settings'])).settings;
 
-    if(!playLogEntry) {
-      response = {
-        statusCode: 404,
-        body: `Play Log Entry ${entryId} not found.`,
+    if(groupSettings.privacyType === 'public' || groupSettings.administratorIds.includes(user) || groupSettings.viewerIds.includes(user)){
+
+      const attributes = ['groupId', 'gameId', 'playerIds', 'winnerIds', 'date', 'notes'];
+      const key = {
+        pk: 'GROUP#' + groupId,
+        sk: 'LOG#' + entryId,
       };
+      const playLogEntry = await getItem<PlayLogEntry>(key, dbClient, attributes);
+
+      if(!playLogEntry) {
+
+        response = {
+          statusCode: 404,
+          body: `Play Log Entry ${entryId} not found.`,
+        };
+      } else {
+
+        response = {
+          statusCode: 200,
+          body: JSON.stringify(playLogEntry),
+        };
+      }
+
     } else {
+
       response = {
-        statusCode: 200,
-        body: JSON.stringify(playLogEntry),
+        statusCode: 403,
+        body: 'Unauthorized.',
       };
     }
 

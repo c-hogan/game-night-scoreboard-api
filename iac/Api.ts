@@ -24,12 +24,9 @@ export function iac({ stack }: StackContext) {
     routes: {
       'POST /v1/groups': 'src/handlers/v1/groups/create-group.handler',
       'GET /v1/groups/{groupId}': 'src/handlers/v1/groups/get-group.handler',
+      'GET /v1/groups/{groupId}/metadata': 'src/handlers/v1/groups/get-group-metadata.handler',
       'PUT /v1/groups/{groupId}': 'src/handlers/v1/groups/update-group.handler',
       'DELETE /v1/groups/{groupId}': 'src/handlers/v1/groups/delete-group.handler',
-      'POST /v1/groups/{groupId}/players': 'src/handlers/v1/players/create-player.handler',
-      'GET /v1/groups/{groupId}/players/{playerId}': 'src/handlers/v1/players/get-player.handler',
-      'PUT /v1/groups/{groupId}/players/{playerId}': 'src/handlers/v1/players/update-player.handler',
-      'DELETE /v1/groups/{groupId}/players/{playerId}': 'src/handlers/v1/players/delete-player.handler',
       'POST /v1/groups/{groupId}/play-log': 'src/handlers/v1/play-log/create-play-log-entry.handler',
       'GET /v1/groups/{groupId}/play-log': 'src/handlers/v1/play-log/get-group-play-log.handler',
       'GET /v1/groups/{groupId}/play-log/{entryId}': 'src/handlers/v1/play-log/get-play-log-entry.handler',

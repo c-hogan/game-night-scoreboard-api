@@ -1,10 +1,16 @@
 {
-  "name": "gnsb-api",
-  "version": "0.0.0",
-  "private": true,
+  "name": "game-night-scoreboard-api",
+  "version": "0.1.0",
+  "description": "API for Game Night Scoreboard web app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/c-hogan/game-night-scoreboard-api"
+  },
+  "license": "GPL-3.0-only",
   "type": "module",
   "scripts": {
     "lint": "eslint ./src/**/*.ts",
+    "lint:fix": "eslint ./src/**/*.ts --fix",
     "dev": "sst dev",
     "build": "sst build",
     "deploy": "sst deploy",
@@ -25,9 +31,6 @@
     "sst": "^2.24.11",
     "typescript": "^5.1.6"
   },
-  "workspaces": [
-    "packages/*"
-  ],
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.395.0",
     "@aws-sdk/lib-dynamodb": "^3.395.0",

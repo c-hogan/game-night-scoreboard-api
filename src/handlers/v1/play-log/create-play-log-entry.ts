@@ -1,7 +1,7 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { nanoid } from 'nanoid';
-import { createItem, getDbClient } from '../../../services/dynamodb';
+import { createItem, getDbClient, getItem } from '../../../services/dynamodb';
 
 let dbClient: DynamoDBDocumentClient;
 
@@ -41,14 +41,28 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       dbClient = getDbClient();
     }
 
-    // TODO: Add permissions check
-
-    const result = await createItem<PlayLogEntry>(playLogEntry, dbClient);
-
-    response = {
-      statusCode: 200,
-      body: JSON.stringify(result),
+    const groupKey = {
+      pk: 'GROUP#' + groupId,
+      sk: 'METADATA#' + groupId,
     };
+
+    const groupSettings = (await getItem<GroupMetadata>(groupKey, dbClient, ['settings'])).settings;
+
+    if(groupSettings.administratorIds.includes(user)){
+      const result = await createItem<PlayLogEntry>(playLogEntry, dbClient);
+
+      response = {
+        statusCode: 200,
+        body: JSON.stringify(result),
+      };
+
+    } else {
+
+      response = {
+        statusCode: 403,
+        body: 'Unauthorized.',
+      };
+    }
 
   } catch (err) {
     console.log(err);
