@@ -31,7 +31,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     if(groupSettings.privacyType === 'public' || groupSettings.administratorIds.includes(user) || groupSettings.viewerIds.includes(user)){
 
-      const attributes = ['groupId', 'gameId', 'playerIds', 'winnerIds', 'date', 'notes'];
+      const attributes = ['id', 'groupId', 'gameId', 'playerIds', 'winnerIds', 'date', 'notes'];
       const partitionKey = 'GROUP#' + groupId;
       const dataType = 'LOG';
       const playLog = await queryTable<PlayLogEntry>(partitionKey, dataType, dbClient, attributes);

@@ -27,6 +27,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const settings: GroupSettings = {
       privacyType: 'private',
       administratorIds: [user],
+      viewerIds: [],
     };
     group.settings = settings;
     group.createdDate = group.lastUpdatedDate = new Date().toISOString();

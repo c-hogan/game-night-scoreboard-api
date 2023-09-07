@@ -29,6 +29,7 @@ interface Player {
 }
 
 interface PlayLogEntry extends DbItem {
+    id: string;
     groupId: string;
     gameId: string;
     playerIds: string[];

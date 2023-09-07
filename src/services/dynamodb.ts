@@ -36,7 +36,7 @@ export const createItem = async <T extends DbItem>(item: T, dbClient: DynamoDBDo
 
   await dbClient.send(command);
 
-  for(const prop in DB_ONLY_PROPERTIES) {
+  for(const prop of DB_ONLY_PROPERTIES) {
     delete item[prop as keyof T];
   }
 
@@ -74,7 +74,7 @@ export const queryTable = async <T>(partitionKey: string, dataType: string, dbCl
       ':pk': partitionKey,
     };
   } else {
-    conditionExpression = 'pk = :pk AND contains(sk, :type)';
+    conditionExpression = 'pk = :pk AND begins_with (sk, :type)';
     attributeValues = {
       ':pk' : partitionKey,
       ':type': dataType,

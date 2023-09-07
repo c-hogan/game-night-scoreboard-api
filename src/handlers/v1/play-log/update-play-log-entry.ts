@@ -31,21 +31,26 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       };
     }
 
-    playLogEntry.lastUpdatedDate = new Date().toISOString();
-    playLogEntry.lastUpdatedBy = user;
-
-    const key = {
-      pk: 'GROUP#' + groupId,
-      sk: 'LOG#' + entryId,
-    };
-
     if(!dbClient) {
       dbClient = getDbClient();
     }
 
-    const groupSettings = (await getItem<GroupMetadata>(key, dbClient, ['settings'])).settings;
+    const groupKey = {
+      pk: 'GROUP#' + groupId,
+      sk: 'METADATA#' + groupId,
+    };
 
+    const groupSettings = (await getItem<GroupMetadata>(groupKey, dbClient, ['settings'])).settings;
+    
     if(groupSettings.administratorIds.includes(user)){
+      const key = {
+        pk: 'GROUP#' + groupId,
+        sk: 'LOG#' + entryId,
+      };
+
+      playLogEntry.lastUpdatedDate = new Date().toISOString();
+      playLogEntry.lastUpdatedBy = user;
+
       const updatedPlayLogEntry = await updateItem<PlayLogEntry>(key, playLogEntry, dbClient);
 
       response = {
